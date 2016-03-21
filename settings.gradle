@@ -1,0 +1,3 @@
+rootProject.name = 'spdxtra'
+rootProject.projectDir = new File('.')
+
