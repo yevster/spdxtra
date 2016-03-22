@@ -76,7 +76,7 @@ public class TestModelOperations {
 		assertTrue(StringUtils.isNotBlank(jsonLd));
 		//Weak, but temporary (is it ever?)
 		assertTrue(StringUtils.contains(jsonLd, "@graph"));
-		assertTrue(StringUtils.contains(jsonLd, "\"algorithm\" : \"http://spdx.org/rdf/terms#algorithm\""));
+		assertTrue(StringUtils.contains(jsonLd, "\"rdfs\" : \"http://www.w3.org/2000/01/rdf-schema#\""));
 	}
 	
 	@Test
@@ -84,7 +84,6 @@ public class TestModelOperations {
 		DatasetInfo readDataset = getDefaultDataSet();
 		String jsonRdf = ModelOperations.toJsonRdf(readDataset);
 		assertTrue(StringUtils.isNotBlank(jsonRdf));
-		FileUtils.write(new File("C:\\tmp\\jsonrdf.json"), jsonRdf);
 	}
 	
 	@After
