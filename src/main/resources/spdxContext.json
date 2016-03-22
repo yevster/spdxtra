@@ -1,0 +1,18 @@
+{
+  "@context" : {
+    "Package" : "http://spdx.org/rdf/terms#Package",
+		"Checksum" : "http://spdx.org/rdf/terms#Checksum",
+		"noticeText" : "http://spdx.org/rdf/terms#noticeText",
+		"licenseComments" : "http://spdx.org/rdf/terms#licenseComments",
+		"copyrightText" : "http://spdx.org/rdf/terms#copyrightText",
+		"fileName" : "http://spdx.org/rdf/terms#fileName",
+		"licenseConcluded" : "http://spdx.org/rdf/terms#licenseConcluded",
+		"licenseInfoInFile" : "http://spdx.org/rdf/terms#licenseInfoInFile",
+		"algorithm" :  "http://spdx.org/rdf/terms#algorithm",
+		"packageVerificationCodeValue" : "http://spdx.org/rdf/terms#packageVerificationCodeValue",
+    "dataLicense" : "http://spdx.org/rdf/terms#dataLicense",
+    "describesPackage" : "http://spdx.org/rdf/terms#describesPackage",
+    "fileType" : "http://spdx.org/rdf/terms#fileType",
+    "checksumValue" : "http://spdx.org/rdf/terms#checksumValue"
+	}
+}
