@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -17,8 +18,14 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.util.Context;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +39,7 @@ public class TestModelOperations {
 	private List<Path> tmpToCleanUp;
 
 	private static final Logger logger = LoggerFactory.getLogger(TestModelOperations.class);
+
 
 	@Before
 	public void setup() {

@@ -52,7 +52,7 @@ public class ModelOperations {
 		final Path datasetPath;
 		try {
 			datasetPath = Files.createTempDirectory(inputFilePath.getFileName().toString());
-			logger.info("Creating new TDB in " + datasetPath.toAbsolutePath().toString());
+			logger.debug("Creating new TDB in " + datasetPath.toAbsolutePath().toString());
 		} catch (IOException ioe) {
 			throw new RuntimeException("Unable to create temp directory", ioe);
 		}
