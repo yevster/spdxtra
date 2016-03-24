@@ -2,22 +2,29 @@ package org.quackware.spdxtra;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.stream.Stream;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.tdb.TDBFactory;
+import org.quackware.spdxtra.model.SpdxPackageInfo;
+import org.quackware.spdxtra.util.MiscUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,9 +77,10 @@ public class ModelOperations {
 		return new DatasetInfo(dataset, datasetPath);
 	}
 
-	
 	/**
-	 * Produces prettified JSON-LD form of SPDX with SPDX terms spirited into the context and out of the document.
+	 * Produces prettified JSON-LD form of SPDX with SPDX terms spirited into
+	 * the context and out of the document.
+	 * 
 	 * @param datasetInfo
 	 * @return
 	 */
@@ -81,8 +89,7 @@ public class ModelOperations {
 		Object jsonLdRaw = null;
 		String jsonLdRawString = null;
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
-				ReadWrite.READ);
-				StringWriter out = new StringWriter();){
+				ReadWrite.READ); StringWriter out = new StringWriter();) {
 			logger.debug("Starting raw JSON-LD output");
 			RDFDataMgr.write(out, datasetInfo.getDataset(), Lang.JSONLD);
 			out.flush();
@@ -92,7 +99,7 @@ public class ModelOperations {
 			logger.debug("Raw JSON parsed.");
 		} catch (IOException ioe) {
 			if (jsonLdRawString == null)
-			throw new RuntimeException("unable to generate JSON", ioe);
+				throw new RuntimeException("unable to generate JSON", ioe);
 			else {
 				logger.error("Unable to pretify JSON. The resulting JSON will not look pretty", ioe);
 				return jsonLdRawString;
@@ -123,19 +130,41 @@ public class ModelOperations {
 		}
 
 	}
-	
-	public static String toJsonRdf(DatasetInfo datasetInfo){
+
+	public static String toJsonRdf(DatasetInfo datasetInfo) {
 		String jsonRdfString = null;
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
-				ReadWrite.READ);
-				StringWriter out = new StringWriter();){
+				ReadWrite.READ); StringWriter out = new StringWriter();) {
 			logger.debug("Starting raw JSON/RDF output");
 			RDFDataMgr.write(out, datasetInfo.getDataset().getDefaultModel(), RDFFormat.RDFJSON);
 			out.flush();
 			jsonRdfString = out.toString();
-		} catch (IOException ioe){
+		} catch (IOException ioe) {
 			throw new RuntimeException("Error generating JSON/RDF", ioe);
 		}
 		return jsonRdfString;
 	}
+
+	public static Iterable<SpdxPackageInfo> getAllPackages(DatasetInfo datasetInfo) {
+		Stream.Builder<SpdxPackageInfo> builder = Stream.builder();
+
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
+				ReadWrite.READ);) {
+
+			String sparql = "SELECT ?s  WHERE { ?s  <" + RDF_TYPE + ">  <http://spdx.org/rdf/terms#Package> }";
+			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
+			ResultSet results = qe.execSelect();
+
+			return MiscUtils.fromIteratorConsumer(results, (QuerySolution qs) -> {
+				RDFNode subject = qs.get("s");
+				return new SpdxPackageInfo(subject.asResource());
+			});
+
+		}
+
+	
+
+	}
+
+	private static final Property RDF_TYPE = new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 }
