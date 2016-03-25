@@ -1,4 +1,4 @@
-package spdxtra;
+package org.quackware.spdxtra;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -27,9 +27,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.quackware.spdxtra.DatasetAutoAbortTransaction;
 import org.quackware.spdxtra.DatasetInfo;
-import org.quackware.spdxtra.ModelOperations;
+import org.quackware.spdxtra.ModelDataAccess;
 import org.quackware.spdxtra.NoneNoAssertionOrValue;
-import org.quackware.spdxtra.model.SpdxPackageInfo;
+import org.quackware.spdxtra.model.SpdxDocument;
+import org.quackware.spdxtra.model.SpdxPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,7 @@ public class TestModelOperations {
 			Path spdxPath = Paths.get(getClass().getClassLoader().getResource("spdx-tools-2.0.0-RC1.spdx.rdf").toURI());
 			assertNotNull(spdxPath);
 			assertTrue(Files.exists(spdxPath));
-			DatasetInfo readDataset = ModelOperations.readFromFile(spdxPath);
+			DatasetInfo readDataset = ModelDataAccess.readFromFile(spdxPath);
 			tmpToCleanUp.add(readDataset.getDatasetPath());
 			assertNotNull(readDataset);
 			assertTrue(Files.isDirectory(readDataset.getDatasetPath()));
@@ -70,7 +71,7 @@ public class TestModelOperations {
 				ReadWrite.READ);) {
 			model = readDataset.getDataset().getDefaultModel();
 			assertNotNull(model);
-			assertEquals("http://spdx.org/rdf/terms#", model.getNsPrefixURI(""));
+			assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#", model.getNsPrefixURI(""));
 
 		}
 	}
@@ -78,7 +79,7 @@ public class TestModelOperations {
 	@Test
 	public void testJsonLd() throws IOException{
 		DatasetInfo readDataset = getDefaultDataSet();
-		String jsonLd = ModelOperations.toJsonLd(readDataset);
+		String jsonLd = ModelDataAccess.toJsonLd(readDataset);
 		assertTrue(StringUtils.isNotBlank(jsonLd));
 		//Weak, but temporary (is it ever?)
 		assertTrue(StringUtils.contains(jsonLd, "@graph"));
@@ -88,22 +89,33 @@ public class TestModelOperations {
 	@Test
 	public void testJsonRdf() throws IOException{
 		DatasetInfo readDataset = getDefaultDataSet();
-		String jsonRdf = ModelOperations.toJsonRdf(readDataset);
+		String jsonRdf = ModelDataAccess.toJsonRdf(readDataset);
 		assertTrue(StringUtils.isNotBlank(jsonRdf));
 	}
 	
 	@Test
-	public void testPackageList() throws IOException{
+	public void testPackageRead() throws IOException{
 		DatasetInfo readDataset = getDefaultDataSet();
-		Iterable<SpdxPackageInfo> packages = ModelOperations.getAllPackages(readDataset);
-		SpdxPackageInfo pkg = Iterables.find(packages, (p)->"SPDXRef-1".equals(p.getSpdxId()));
-		
+		Iterable<SpdxPackage> packages = ModelDataAccess.getAllPackages(readDataset);
+		SpdxPackage pkg = Iterables.find(packages, (p)->"SPDXRef-1".equals(p.getSpdxId()));
 
 		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
 		assertEquals("SPDX tools", pkg.getName());
 		assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
+		assertEquals(12, Iterables.size(ModelDataAccess.getFilesForPackage(pkg)));
 		
 	}
+	
+	@Test
+	public void testSpdxDocumentInfo() throws IOException{
+		DatasetInfo readDataset = getDefaultDataSet();
+		SpdxDocument doc = ModelDataAccess.getDocument(readDataset);
+		assertEquals("SPDX-2.0", doc.getSpecVersion());
+		assertEquals("SPDX tools", doc.getName());
+		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT", doc.getDocumentNamespace());
+		
+	}
+	
 	
 	
 	

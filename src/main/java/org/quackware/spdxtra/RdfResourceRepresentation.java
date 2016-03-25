@@ -1,17 +1,19 @@
 package org.quackware.spdxtra;
 
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 
 public abstract class RdfResourceRepresentation {
 	private final Resource rdfResource;
+	public static final Property RDF_TYPE = new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
 
 	protected RdfResourceRepresentation(Resource rdfResource) {
 		this.rdfResource = rdfResource;
 	}
 
-	public String getPropertyAsString(String propertyUri) {
+	protected String getPropertyAsString(String propertyUri) {
 		Statement stmt = rdfResource.getProperty(new PropertyImpl(propertyUri));
 		if (stmt == null)
 			return null;
@@ -19,12 +21,12 @@ public abstract class RdfResourceRepresentation {
 			return stmt.getString();
 	}
 
-	public Resource getPropertyAsResource(String propertyUri) {
+	protected Resource getPropertyAsResource(String propertyUri) {
 		Statement stmt = rdfResource.getProperty(new PropertyImpl(propertyUri));
 		return stmt.getResource();
 	}
 
-	public NoneNoAssertionOrValue getPropertyAsNoneNoAssertionOrValue(String propertyUri) {
+	protected NoneNoAssertionOrValue getPropertyAsNoneNoAssertionOrValue(String propertyUri) {
 		Resource r = getPropertyAsResource(propertyUri);
 		if (r.isLiteral()) {
 			return NoneNoAssertionOrValue.of(r.asLiteral().getString());

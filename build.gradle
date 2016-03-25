@@ -8,7 +8,7 @@ mainClassName = 'org.quackware.spdxtra.CommandLineTool'
 jar {
 
     manifest {
-        attributes 'Main-Class': 'org.quackware.spdxtra.CommandLineTool'
+        attributes 'Main-Class': 'org.quackware.spdxtra.cli.CommandLineTool'
     }
 
 	baseName="spdxtra"

@@ -1,4 +1,4 @@
-package org.quackware.spdxtra;
+package org.quackware.spdxtra.cli;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,6 +16,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.quackware.spdxtra.DatasetInfo;
+import org.quackware.spdxtra.ModelDataAccess;
 
 public class CommandLineTool {
 	public enum Operations {
@@ -78,8 +80,8 @@ public class CommandLineTool {
 	private static void executeRdfXmlToJsonLd(Path inputPath, Path outputPath) {
 		DatasetInfo datasetInfo = null;
 		try {
-			datasetInfo = ModelOperations.readFromFile(inputPath);
-			String jsonLd = ModelOperations.toJsonLd(datasetInfo);
+			datasetInfo = ModelDataAccess.readFromFile(inputPath);
+			String jsonLd = ModelDataAccess.toJsonLd(datasetInfo);
 			FileUtils.write(outputPath.toFile(), jsonLd, Charset.forName(Charsets.UTF_16.name()));
 		} catch (IOException ioe) {
 			System.err.println("Unable to write file " + outputPath.toString());

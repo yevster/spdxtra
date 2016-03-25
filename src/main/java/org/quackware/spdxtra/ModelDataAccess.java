@@ -7,7 +7,6 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.jena.query.Dataset;
@@ -16,14 +15,18 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.tdb.TDBFactory;
-import org.quackware.spdxtra.model.SpdxPackageInfo;
+import org.quackware.spdxtra.model.Relationship;
+import org.quackware.spdxtra.model.SpdxDocument;
+import org.quackware.spdxtra.model.SpdxElement;
+import org.quackware.spdxtra.model.SpdxFile;
+import org.quackware.spdxtra.model.SpdxPackage;
 import org.quackware.spdxtra.util.MiscUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +39,17 @@ import com.github.jsonldjava.utils.JsonUtils;
 /**
  * @author yevster
  *
- *         Static model manipulation logic
+ *         Contains all logic for reading from datastore.
  *
  *         Copyright (c) 2016 Yev Bronshteyn. Committed under Apache-2.0 License
  */
-public class ModelOperations {
+public class ModelDataAccess {
 
-	private static final Logger logger = LoggerFactory.getLogger(ModelOperations.class);
+	private static final Logger logger = LoggerFactory.getLogger(ModelDataAccess.class);
+
+	private static String createSparqlQueryByType(String typeUri) {
+		return "SELECT ?s  WHERE { ?s  <" + RdfResourceRepresentation.RDF_TYPE + ">  <" + typeUri + "> }";
+	}
 
 	/**
 	 * Reads inputFilePath and popualtes a new RDF data store at
@@ -108,7 +115,7 @@ public class ModelOperations {
 		Object jsonLdContext = null;
 
 		try {
-			InputStream jsonContextStream = ModelOperations.class.getClassLoader()
+			InputStream jsonContextStream = ModelDataAccess.class.getClassLoader()
 					.getResourceAsStream("spdxContext.json");
 			jsonLdContext = JsonUtils.fromInputStream(jsonContextStream);
 			jsonContextStream.close();
@@ -145,26 +152,59 @@ public class ModelOperations {
 		return jsonRdfString;
 	}
 
-	public static Iterable<SpdxPackageInfo> getAllPackages(DatasetInfo datasetInfo) {
-		Stream.Builder<SpdxPackageInfo> builder = Stream.builder();
+	public static Iterable<SpdxPackage> getAllPackages(DatasetInfo datasetInfo) {
 
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
 				ReadWrite.READ);) {
 
-			String sparql = "SELECT ?s  WHERE { ?s  <" + RDF_TYPE + ">  <http://spdx.org/rdf/terms#Package> }";
+			String sparql = createSparqlQueryByType(SpdxPackage.RDF_TYPE) ;
 			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
 			ResultSet results = qe.execSelect();
 
 			return MiscUtils.fromIteratorConsumer(results, (QuerySolution qs) -> {
 				RDFNode subject = qs.get("s");
-				return new SpdxPackageInfo(subject.asResource());
+				return new SpdxPackage(subject.asResource());
 			});
-
 		}
-
-	
-
 	}
 
-	private static final Property RDF_TYPE = new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	/**
+	 * Obtains the SPDX Document described in the provided model. Per SPDX 2.0
+	 * specification, there should be exactly one in a file, so only the first
+	 * match will be returned.
+	 * 
+	 * @param datasetInfo
+	 * @return
+	 */
+	public static SpdxDocument getDocument(DatasetInfo datasetInfo) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
+				ReadWrite.READ);) {
+
+			String sparql = createSparqlQueryByType(SpdxDocument.RDF_TYPE);
+			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
+			ResultSet results = qe.execSelect();
+			assert (results.hasNext()); // There should always be one document
+										// per SPDX File.
+			RDFNode subject = results.next().get("s");
+			assert (subject.isResource());
+			return new SpdxDocument(subject.asResource());
+		}
+	}
+
+	/**
+	 * Returns a lazy iteraterable of SpdxFiles.
+	 * 
+	 * @return
+	 */
+	public static Iterable<SpdxFile> getFilesForPackage(SpdxPackage pkg) {
+
+		Resource hasFileResource = pkg.getPropertyAsResource(Namespaces.SPDX_TERMS + "hasFile");
+		final StmtIterator it = hasFileResource.listProperties();
+
+		return MiscUtils.fromIteratorConsumer(it, (s) -> {
+			String uri = s.getSubject().getURI();
+			return new SpdxFile(hasFileResource.getModel().getResource(uri));
+		});
+	}
+	
 }
