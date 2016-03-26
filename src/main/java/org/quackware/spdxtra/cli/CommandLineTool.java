@@ -1,9 +1,7 @@
 package org.quackware.spdxtra.cli;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -87,6 +85,7 @@ public class CommandLineTool {
 			System.err.println("Unable to write file " + outputPath.toString());
 			ioe.printStackTrace(System.err);
 		} finally {
+			if (datasetInfo!= null)
 			FileUtils.deleteQuietly(datasetInfo.getDatasetPath().toFile());
 		}
 	}

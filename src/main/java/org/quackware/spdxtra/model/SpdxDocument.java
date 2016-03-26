@@ -8,9 +8,10 @@ import org.quackware.spdxtra.RdfResourceRepresentation;
  * Describes an SPDX document.
  *
  */
-public class SpdxDocument extends RdfResourceRepresentation implements Relatable{
+public class SpdxDocument extends SpdxElement {
 	public static final String RDF_TYPE = Namespaces.SPDX_TERMS + "SpdxDocument";
 
+	
 	public static class CreationInfo extends RdfResourceRepresentation {
 		CreationInfo(Resource r) {
 			super(r);

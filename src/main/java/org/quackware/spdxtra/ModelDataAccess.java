@@ -6,18 +6,24 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Objects;
 
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.jena.ext.com.google.common.collect.ImmutableList;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -49,6 +55,10 @@ public class ModelDataAccess {
 
 	private static String createSparqlQueryByType(String typeUri) {
 		return "SELECT ?s  WHERE { ?s  <" + RdfResourceRepresentation.RDF_TYPE + ">  <" + typeUri + "> }";
+	}
+
+	private static String createSparqlQueryBySubjectAndPredicate(String subjectUri, String predicateUri) {
+		return "SELECT ?o where { <" + subjectUri + "> <" + predicateUri + "> ?o}";
 	}
 
 	/**
@@ -157,7 +167,7 @@ public class ModelDataAccess {
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
 				ReadWrite.READ);) {
 
-			String sparql = createSparqlQueryByType(SpdxPackage.RDF_TYPE) ;
+			String sparql = createSparqlQueryByType(SpdxPackage.RDF_TYPE);
 			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
 			ResultSet results = qe.execSelect();
 
@@ -206,5 +216,36 @@ public class ModelDataAccess {
 			return new SpdxFile(hasFileResource.getModel().getResource(uri));
 		});
 	}
-	
+
+	/**
+	 * Returns all the relationships element has and the targets of those
+	 * relationships. Does not return the relationships for which
+	 * relationshipSource itself is a target.
+	 * 
+	 * For example, if element is an SpdxDocument that describes a package, the
+	 * DESCRIBES relationship from the document to the package will be returned.
+	 * However, the DESCRIBED_BY relationship from the package to the document
+	 * will not be returned.
+	 * 
+	 * @param relationshipSource
+	 * @return
+	 */
+	public static Iterable<Relationship> getRelationships(DatasetInfo datasetInfo,
+			SpdxElement element) {
+		String sparql = createSparqlQueryBySubjectAndPredicate(element.getUri(),
+				Namespaces.SPDX_TERMS + "relationship");
+
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
+				ReadWrite.READ);) {
+			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
+			ResultSet results = qe.execSelect();
+			return MiscUtils.fromIteratorConsumer(results, (QuerySolution qs) -> {
+				RDFNode relationshipNode = qs.get("o");
+				assert (relationshipNode.isResource());
+				return new Relationship(relationshipNode.asResource());
+			});
+
+		}
+	}
+
 }

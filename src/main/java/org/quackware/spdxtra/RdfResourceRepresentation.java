@@ -1,5 +1,7 @@
 package org.quackware.spdxtra;
 
+import java.util.Objects;
+
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
@@ -38,6 +40,21 @@ public abstract class RdfResourceRepresentation {
 
 	public String getUri() {
 		return rdfResource.getURI();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// Must be the same subclass
+		// Then, Use Resource's Equals implementation (compares URIs).
+		// For SPDX purposes, this should be sufficient.
+		return obj != null && Objects.equals(obj.getClass(), getClass())
+				&& rdfResource.equals(((RdfResourceRepresentation) obj).rdfResource);
+
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.getClass().getName(), this.getUri());
 	}
 
 }

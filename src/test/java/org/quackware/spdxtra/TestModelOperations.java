@@ -5,30 +5,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.ext.com.google.common.base.Joiner;
 import org.apache.jena.ext.com.google.common.collect.Iterables;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.quackware.spdxtra.DatasetAutoAbortTransaction;
-import org.quackware.spdxtra.DatasetInfo;
-import org.quackware.spdxtra.ModelDataAccess;
-import org.quackware.spdxtra.NoneNoAssertionOrValue;
+import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.SpdxDocument;
 import org.quackware.spdxtra.model.SpdxPackage;
 import org.slf4j.Logger;
@@ -66,7 +59,6 @@ public class TestModelOperations {
 	public void testNewDataset() throws IOException {
 		DatasetInfo readDataset = getDefaultDataSet();
 		final Model model;
-		StringWriter out = new StringWriter();
 		try (DatasetAutoAbortTransaction t = DatasetAutoAbortTransaction.begin(readDataset.getDataset(),
 				ReadWrite.READ);) {
 			model = readDataset.getDataset().getDefaultModel();
@@ -104,16 +96,31 @@ public class TestModelOperations {
 		assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
 		assertEquals(12, Iterables.size(ModelDataAccess.getFilesForPackage(pkg)));
 		
+
 	}
 	
 	@Test
-	public void testSpdxDocumentInfo() throws IOException{
+	public void testSpdxDocumentInfoAndRelationships() throws IOException{
 		DatasetInfo readDataset = getDefaultDataSet();
 		SpdxDocument doc = ModelDataAccess.getDocument(readDataset);
 		assertEquals("SPDX-2.0", doc.getSpecVersion());
 		assertEquals("SPDX tools", doc.getName());
 		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT", doc.getDocumentNamespace());
 		
+
+		Iterable<Relationship> related = ModelDataAccess.getRelationships(readDataset, doc);
+		Iterator<Relationship> it = related.iterator();
+		
+		//There should only be one relationship - describes.
+		assertTrue(it.hasNext());
+		Relationship describesRelationship = it.next();
+		assertTrue(!it.hasNext());
+		assertEquals(Relationship.Type.DESCRIBES, describesRelationship.getType());
+		assertTrue(describesRelationship.getRelatedElement() instanceof SpdxPackage);
+		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.getRelatedElement().getUri());
+		
+		//Make sure we don't create a new object each time we call getRelatedElement().
+		assertTrue(describesRelationship.getRelatedElement() == describesRelationship.getRelatedElement());
 	}
 	
 	

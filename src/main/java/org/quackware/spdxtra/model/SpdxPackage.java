@@ -7,7 +7,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.quackware.spdxtra.Namespaces;
 import org.quackware.spdxtra.NoneNoAssertionOrValue;
 
-public class SpdxPackage extends SpdxElement {
+public class SpdxPackage extends SpdxElement implements SpdxIdentifiable{
 
 	public static final String RDF_TYPE = Namespaces.SPDX_TERMS + "Package";
 
