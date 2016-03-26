@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.ext.com.google.common.base.MoreObjects;
 import org.apache.jena.rdf.model.Resource;
 import org.quackware.spdxtra.Namespaces;
 import org.quackware.spdxtra.RdfResourceRepresentation;
@@ -64,6 +65,12 @@ public class Relationship extends RdfResourceRepresentation {
 			relatedElement = Optional.of(SpdxElementFactory.relationshipTargetFromResource(r));
 			return relatedElement.get();
 		}
+	}
+
+	@Override
+	public String toString() {
+		return new StringBuilder().append("[").append(getType()).append("](").append(getRelatedElement().getClass().getSimpleName())
+				.append(")").append(getRelatedElement().getUri()).toString();
 	}
 
 }

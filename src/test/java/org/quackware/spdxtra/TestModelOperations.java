@@ -23,9 +23,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.SpdxDocument;
+import org.quackware.spdxtra.model.SpdxFile;
 import org.quackware.spdxtra.model.SpdxPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sun.org.apache.xpath.internal.operations.Mod;
 
 public class TestModelOperations {
 	private List<Path> tmpToCleanUp;
@@ -118,9 +121,10 @@ public class TestModelOperations {
 		assertEquals(Relationship.Type.DESCRIBES, describesRelationship.getType());
 		assertTrue(describesRelationship.getRelatedElement() instanceof SpdxPackage);
 		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.getRelatedElement().getUri());
-		
+		assertEquals("[DESCRIBES](SpdxPackage)http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.toString());
 		//Make sure we don't create a new object each time we call getRelatedElement().
 		assertTrue(describesRelationship.getRelatedElement() == describesRelationship.getRelatedElement());
+	
 	}
 	
 	
