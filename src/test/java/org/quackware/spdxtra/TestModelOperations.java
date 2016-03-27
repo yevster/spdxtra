@@ -12,18 +12,23 @@ import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.ext.com.google.common.collect.ImmutableList;
+import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.tdb.TDBFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.SpdxDocument;
+import org.quackware.spdxtra.model.SpdxFile;
 import org.quackware.spdxtra.model.SpdxPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +86,7 @@ public class TestModelOperations {
 	}
 
 	@Test
-	public void testSpdxDocumentInfoAndRelationships() throws IOException {
+	public void testSpdxDocumentInfoAndRelationships() {
 		Dataset dataset = getDefaultDataSet();
 		SpdxDocument doc = ModelDataAccess.getDocument(dataset);
 		assertEquals("SPDX-2.0", doc.getSpecVersion());
@@ -103,6 +108,19 @@ public class TestModelOperations {
 		// getRelatedElement().
 		assertTrue(describesRelationship.getRelatedElement() == describesRelationship.getRelatedElement());
 
+	}
+	
+	
+	@Test
+	public void testElementRetrieval(){
+		Dataset dataset = getDefaultDataSet();
+		Resource docResource = ModelDataAccess.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT").orElse(null);
+		assertNotNull(docResource);
+		
+		Optional<Resource> shouldBeEmpty = ModelDataAccess.lookupResourceByUri(dataset, "foo://No esta aqui");
+		assertEquals(Optional.empty(), shouldBeEmpty);
+		
+		
 	}
 
 	@After

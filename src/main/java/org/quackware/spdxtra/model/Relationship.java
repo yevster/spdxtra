@@ -4,13 +4,21 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.quackware.spdxtra.SpdxUris;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.quackware.spdxtra.RdfResourceRepresentation;
+import org.quackware.spdxtra.RdfResourceUpdate;
 import org.quackware.spdxtra.SpdxElementFactory;
+import org.quackware.spdxtra.SpdxUris;
 
 public class Relationship extends RdfResourceRepresentation {
-	
+
+	private static final Property relationshipTypeProperty = new PropertyImpl(SpdxUris.SPDX_TERMS + "relationshipType");
+	private static final Property relatedElementProperty = new PropertyImpl(SpdxUris.SPDX_TERMS + "relatedSpdxElement");
+
 	public enum Type {
 		DESCRIBES, DESCRIBED_BY, CONTAINS, CONTAINED_BY, GENERATES, GENERATED_FROM, ANCESTOR_OF, DESCENDANT_OF, VARIANT_OF, DISTRIBUTION_ARTIFACT, PATCH_FOR, PATCH_APPLIED, COPY_OF, FILE_ADDED, FILE_DELETED, FILE_MODIFIED, EXPANDED_FROM_ARCHIVE, DYNAMIC_LINK, STATIC_LINK, DATA_FILE, TESTCASE_OF, BUILD_TOOL_OF, DOCUMENTATION_OF, OPTIONAL_COMPONENT_OF, METAFILE_OF, PACKAGE_OF, AMENDS, PREREQUISITE_FOR, HAS_PREREQUISITE, OTHER;
 
@@ -53,15 +61,19 @@ public class Relationship extends RdfResourceRepresentation {
 	}
 
 	public Type getType() {
-		String uri = getPropertyAsResource(SpdxUris.SPDX_TERMS + "relationshipType").getURI();
+		String uri = getPropertyAsResource(relationshipTypeProperty).getURI();
 		return Type.fromUri(uri);
+	}
+
+	public String getComment() {
+		return getPropertyAsString(RDF_COMMENT_PROPERTY);
 	}
 
 	public SpdxElement getRelatedElement() {
 		if (relatedElement.isPresent())
 			return relatedElement.get();
 		else {
-			Resource r = getPropertyAsResource(SpdxUris.SPDX_TERMS + "relatedSpdxElement");
+			Resource r = getPropertyAsResource(relatedElementProperty);
 			relatedElement = Optional.of(SpdxElementFactory.relationshipTargetFromResource(r));
 			return relatedElement.get();
 		}
@@ -71,6 +83,20 @@ public class Relationship extends RdfResourceRepresentation {
 	public String toString() {
 		return new StringBuilder().append("[").append(getType()).append("](").append(getRelatedElement().getClass().getSimpleName())
 				.append(")").append(getRelatedElement().getUri()).toString();
+	}
+
+	public static RdfResourceUpdate addRelationship(final SpdxElement sourceElement, final SpdxElement targetElement,
+			final Optional<String> comment, final Relationship.Type type) {
+
+		return new RdfResourceUpdate(sourceElement.getUri(), new PropertyImpl(SpdxUris.SPDX_RELATIONSHIP), true, (Model m) -> {
+
+			Resource innerRelationship = m.createResource(new ResourceImpl(SpdxUris.SPDX_TERMS + "Relationship"));
+			innerRelationship.addProperty(relationshipTypeProperty, m.createResource(type.getUri()));
+			if (comment.isPresent())
+				innerRelationship.addProperty(RDF_COMMENT_PROPERTY, m.createLiteral(comment.get()));
+			innerRelationship.addProperty(relatedElementProperty, m.getResource(targetElement.getUri()));
+			return innerRelationship;
+		});
 	}
 
 }

@@ -16,7 +16,7 @@ import org.quackware.spdxtra.model.SpdxPackage;
 public class SpdxElementFactory {
 
 	public static SpdxElement relationshipTargetFromResource(Resource r) {
-		String rdfType = r.getProperty(RdfResourceRepresentation.RDF_TYPE).getObject().asResource().getURI();
+		String rdfType = r.getProperty(RdfResourceRepresentation.RDF_TYPE_PROPERTY).getObject().asResource().getURI();
 		switch (rdfType) {
 		case (SpdxPackage.RDF_TYPE):
 			return new SpdxPackage(r);

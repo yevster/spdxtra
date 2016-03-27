@@ -9,27 +9,32 @@ import org.apache.jena.rdf.model.impl.PropertyImpl;
 
 public abstract class RdfResourceRepresentation {
 	private final Resource rdfResource;
-	public static final Property RDF_TYPE = new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	public static final Property RDF_TYPE_PROPERTY = new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	public static final Property RDF_COMMENT_PROPERTY = new PropertyImpl(SpdxUris.RDFS_NAMESPACE, "comment");
 
 	protected RdfResourceRepresentation(Resource rdfResource) {
 		this.rdfResource = rdfResource;
 	}
 
-	protected String getPropertyAsString(Property property){
+	protected String getPropertyAsString(Property property) {
 		Statement stmt = rdfResource.getProperty(property);
 		if (stmt == null)
 			return null;
 		else
 			return stmt.getString();
 	}
-	
+
 	protected String getPropertyAsString(String propertyUri) {
 		return getPropertyAsString(new PropertyImpl(propertyUri));
-		
+
 	}
 
 	protected Resource getPropertyAsResource(String propertyUri) {
-		Statement stmt = rdfResource.getProperty(new PropertyImpl(propertyUri));
+		return getPropertyAsResource(new PropertyImpl(propertyUri));
+	}
+
+	protected Resource getPropertyAsResource(Property property) {
+		Statement stmt = rdfResource.getProperty(property);
 		return stmt.getResource();
 	}
 

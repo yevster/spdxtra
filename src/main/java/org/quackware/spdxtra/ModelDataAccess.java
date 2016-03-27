@@ -1,5 +1,6 @@
 package org.quackware.spdxtra;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -7,22 +8,32 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Selector;
+import org.apache.jena.rdf.model.SimpleSelector;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RiotWriter;
+import org.apache.jena.riot.WriterDatasetRIOT;
+import org.apache.jena.riot.WriterGraphRIOT;
+import org.apache.jena.riot.system.PrefixMapFactory;
 import org.apache.jena.tdb.TDBFactory;
 import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.SpdxDocument;
@@ -56,7 +67,7 @@ public class ModelDataAccess {
 	private static final Logger logger = LoggerFactory.getLogger(ModelDataAccess.class);
 
 	private static String createSparqlQueryByType(String typeUri) {
-		return "SELECT ?s  WHERE { ?s  <" + RdfResourceRepresentation.RDF_TYPE + ">  <" + typeUri + "> }";
+		return "SELECT ?s  WHERE { ?s  <" + RdfResourceRepresentation.RDF_TYPE_PROPERTY + ">  <" + typeUri + "> }";
 	}
 
 	private static String createSparqlQueryBySubjectAndPredicate(String subjectUri, String predicateUri) {
@@ -111,6 +122,18 @@ public class ModelDataAccess {
 			transaction.commit();
 		}
 
+	}
+
+	public static void writeRdfXml(Dataset dataset, Path outputFilePath) throws IOException {
+		Objects.requireNonNull(dataset);
+		Objects.requireNonNull(outputFilePath);
+		Files.createFile(outputFilePath);
+		try (FileOutputStream fos = new FileOutputStream(outputFilePath.toFile());
+				DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+			WriterGraphRIOT writer = RDFDataMgr.createGraphWriter(RDFFormat.RDFXML_PRETTY);
+		
+			writer.write(fos, dataset.asDatasetGraph().getDefaultGraph(), PrefixMapFactory.create(dataset.getDefaultModel().getNsPrefixMap()), null, dataset.getContext());
+		}
 	}
 
 	/**
@@ -247,7 +270,7 @@ public class ModelDataAccess {
 	 * @return
 	 */
 	public static Iterable<Relationship> getRelationships(Dataset dataset, SpdxElement element) {
-		String sparql = createSparqlQueryBySubjectAndPredicate(element.getUri(), SpdxUris.SPDX_TERMS + "relationship");
+		String sparql = createSparqlQueryBySubjectAndPredicate(element.getUri(), SpdxUris.SPDX_RELATIONSHIP);
 
 		return getRelationshipsWithSparql(dataset, sparql);
 	}
@@ -266,8 +289,8 @@ public class ModelDataAccess {
 	}
 
 	public static Iterable<Relationship> getRelationships(Dataset dataset, SpdxElement element, Relationship.Type relationshipType) {
-		String sparql = "SELECT ?o  WHERE { <"+element.getUri()+"> <" +  SpdxUris.SPDX_TERMS + "relationship> ?o.\n" 
-				+ "?o <" + SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
+		String sparql = "SELECT ?o  WHERE { <" + element.getUri() + "> <" + SpdxUris.SPDX_RELATIONSHIP + "> ?o.\n" + "?o <"
+				+ SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
 		return getRelationshipsWithSparql(dataset, sparql);
 	}
 
@@ -276,17 +299,37 @@ public class ModelDataAccess {
 			Model model = dataset.getDefaultModel();
 			for (RdfResourceUpdate update : updates) {
 				Resource resource = model.getResource(update.getResourceUri());
-				Statement s = resource.getProperty(update.getProperty());
-				if (s != null) {
-					s.changeObject(update.getNewValueBuilder().newValue(model));
-				} else {
+
+				if (update.getCreateNewProperty()) {
 					resource.addProperty(update.getProperty(), update.getNewValueBuilder().newValue(model));
+				} else {
+					Statement s = resource.getProperty(update.getProperty());
+					if (s != null) {
+						s.changeObject(update.getNewValueBuilder().newValue(model));
+					} else {
+						resource.addProperty(update.getProperty(), update.getNewValueBuilder().newValue(model));
+					}
 				}
 
 			}
 			transaction.commit();
 		}
 
+	}
+
+	public static Optional<Resource> lookupResourceByUri(Dataset dataset, String uri) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+			Model model = dataset.getDefaultModel();
+			// Although this would create a new resource if it didn't exist,
+			// we're in a read-only transaction.
+			Resource result = model.createResource(uri);
+			if (!result.listProperties().hasNext()) { // an existing resource
+														// would have at least a
+														// type
+				return Optional.empty();
+			} else
+				return Optional.of(result);
+		}
 	}
 
 }

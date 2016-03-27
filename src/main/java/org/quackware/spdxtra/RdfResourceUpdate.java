@@ -11,7 +11,7 @@ public class RdfResourceUpdate {
 	private String resourceUri;
 	private Property property;
 	private UpdateRdfNodeBuilder newValueBuilder;
-	private boolean createNewResouce = true;
+	private boolean createNewProperty = false;
 
 	/**
 	 * Creates an update that updates an existing user property.
@@ -23,7 +23,7 @@ public class RdfResourceUpdate {
 	 */
 	public static RdfResourceUpdate updateStringProperty(String resourceUri, Property property, String updatedValue) {
 		UpdateRdfNodeBuilder updateBuilder = (Model model) -> model.createLiteral(updatedValue);
-		return new RdfResourceUpdate(resourceUri, property, updateBuilder);
+		return new RdfResourceUpdate(resourceUri, property, false, updateBuilder);
 	}
 
 	public interface UpdateRdfNodeBuilder {
@@ -40,15 +40,24 @@ public class RdfResourceUpdate {
 	 *            The URI of the resource to be updated
 	 * @param createNewResource
 	 *            True if, and only if, the resource at that URI should be
-	 *            created if it doesn't already exist. If set to false and the resource at resourceUri
-	 *            doesn't exist at the time when the update is applied, a {@link IllegalUpdateException} will be thrown.
+	 *            created if it doesn't already exist. If set to false and the
+	 *            resource at resourceUri doesn't exist at the time when the
+	 *            update is applied, a {@link IllegalUpdateException} will be
+	 *            thrown.
 	 * @param property
 	 *            The property to be updated
+	 * @param createNewProperty
+	 *            Whether or not a new property should be created if the
+	 *            property already exists. Should be true only if multiple
+	 *            instances of one property could exist (e.g. one SPDX element
+	 *            can have multiple relationships).
+	 * 
 	 */
-	public RdfResourceUpdate(String resourceUri, Property property, UpdateRdfNodeBuilder newValueBuilder) {
+	public RdfResourceUpdate(String resourceUri, Property property, boolean createNewProperty, UpdateRdfNodeBuilder newValueBuilder) {
 		this.resourceUri = Objects.requireNonNull(resourceUri);
 		this.property = Objects.requireNonNull(property);
 		this.newValueBuilder = Objects.requireNonNull(newValueBuilder);
+		this.createNewProperty = createNewProperty;
 	}
 
 	public String getResourceUri() {
@@ -63,8 +72,8 @@ public class RdfResourceUpdate {
 		return newValueBuilder;
 	}
 
-	public boolean getCreateNewResource(){
-		return createNewResouce;
+	public boolean getCreateNewProperty() {
+		return createNewProperty;
 	}
 
 }
