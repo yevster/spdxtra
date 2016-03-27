@@ -14,7 +14,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.quackware.spdxtra.DatasetInfo;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.tdb.TDBFactory;
 import org.quackware.spdxtra.ModelDataAccess;
 
 public class CommandLineTool {
@@ -35,10 +36,8 @@ public class CommandLineTool {
 		operationOption.setRequired(true);
 		options.addOption(operationOption);
 
-		Option inputOption = Option.builder("inputFile").argName("inputFile").desc("The file to be processed").hasArg()
-				.required().build();
-		Option outputOption = Option.builder("outputFile").argName("outputFile").desc("The file to be written").hasArg()
-				.required().build();
+		Option inputOption = Option.builder("inputFile").argName("inputFile").desc("The file to be processed").hasArg().required().build();
+		Option outputOption = Option.builder("outputFile").argName("outputFile").desc("The file to be written").hasArg().required().build();
 		options.addOption(inputOption);
 		options.addOption(outputOption);
 		try {
@@ -58,14 +57,14 @@ public class CommandLineTool {
 				System.err.println("File " + outputFilePath.toString() + " already exists.");
 				System.exit(1);
 			}
-			
-			switch (operation){
-				case "RdfXmlToJsonLd":
-					executeRdfXmlToJsonLd(inputFilePath, outputFilePath);
-					break;
-				default:
-					System.out.println(USAGE);
-					
+
+			switch (operation) {
+			case "RdfXmlToJsonLd":
+				executeRdfXmlToJsonLd(inputFilePath, outputFilePath);
+				break;
+			default:
+				System.out.println(USAGE);
+
 			}
 
 		} catch (ParseException pe) {
@@ -76,17 +75,16 @@ public class CommandLineTool {
 	}
 
 	private static void executeRdfXmlToJsonLd(Path inputPath, Path outputPath) {
-		DatasetInfo datasetInfo = null;
+		// Might as well do this in memory since current JSON-LD context logic
+		// requires an in-memory model anyway.
+		final Dataset dataset = TDBFactory.createDataset();
 		try {
-			datasetInfo = ModelDataAccess.readFromFile(inputPath);
-			String jsonLd = ModelDataAccess.toJsonLd(datasetInfo);
+			ModelDataAccess.readFromFile(inputPath, dataset);
+			String jsonLd = ModelDataAccess.toJsonLd(dataset);
 			FileUtils.write(outputPath.toFile(), jsonLd, Charset.forName(Charsets.UTF_16.name()));
 		} catch (IOException ioe) {
 			System.err.println("Unable to write file " + outputPath.toString());
 			ioe.printStackTrace(System.err);
-		} finally {
-			if (datasetInfo!= null)
-			FileUtils.deleteQuietly(datasetInfo.getDatasetPath().toFile());
 		}
 	}
 

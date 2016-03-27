@@ -4,18 +4,18 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.ext.com.google.common.base.MoreObjects;
 import org.apache.jena.rdf.model.Resource;
-import org.quackware.spdxtra.Namespaces;
+import org.quackware.spdxtra.SpdxUris;
 import org.quackware.spdxtra.RdfResourceRepresentation;
 import org.quackware.spdxtra.SpdxElementFactory;
 
 public class Relationship extends RdfResourceRepresentation {
+	
 	public enum Type {
 		DESCRIBES, DESCRIBED_BY, CONTAINS, CONTAINED_BY, GENERATES, GENERATED_FROM, ANCESTOR_OF, DESCENDANT_OF, VARIANT_OF, DISTRIBUTION_ARTIFACT, PATCH_FOR, PATCH_APPLIED, COPY_OF, FILE_ADDED, FILE_DELETED, FILE_MODIFIED, EXPANDED_FROM_ARCHIVE, DYNAMIC_LINK, STATIC_LINK, DATA_FILE, TESTCASE_OF, BUILD_TOOL_OF, DOCUMENTATION_OF, OPTIONAL_COMPONENT_OF, METAFILE_OF, PACKAGE_OF, AMENDS, PREREQUISITE_FOR, HAS_PREREQUISITE, OTHER;
 
 		public String getUri() {
-			StringBuilder result = new StringBuilder(Namespaces.SPDX_TERMS);
+			StringBuilder result = new StringBuilder(SpdxUris.SPDX_TERMS);
 			result.append("relationshipType_");
 			String[] elements = StringUtils.split(this.name(), '_');
 			assert (elements.length >= 1);
@@ -36,7 +36,7 @@ public class Relationship extends RdfResourceRepresentation {
 		 */
 		public static Type fromUri(String uriOrLocalName) {
 			Objects.requireNonNull(uriOrLocalName);
-			String localName = StringUtils.removeStart(uriOrLocalName, Namespaces.SPDX_TERMS);
+			String localName = StringUtils.removeStart(uriOrLocalName, SpdxUris.SPDX_TERMS);
 			localName = StringUtils.removeStart(localName, "relationshipType_");
 			String[] tokens = StringUtils.splitByCharacterTypeCamelCase(localName);
 			String result = StringUtils.join(tokens, "_");
@@ -53,7 +53,7 @@ public class Relationship extends RdfResourceRepresentation {
 	}
 
 	public Type getType() {
-		String uri = getPropertyAsResource(Namespaces.SPDX_TERMS + "relationshipType").getURI();
+		String uri = getPropertyAsResource(SpdxUris.SPDX_TERMS + "relationshipType").getURI();
 		return Type.fromUri(uri);
 	}
 
@@ -61,7 +61,7 @@ public class Relationship extends RdfResourceRepresentation {
 		if (relatedElement.isPresent())
 			return relatedElement.get();
 		else {
-			Resource r = getPropertyAsResource(Namespaces.SPDX_TERMS + "relatedSpdxElement");
+			Resource r = getPropertyAsResource(SpdxUris.SPDX_TERMS + "relatedSpdxElement");
 			relatedElement = Optional.of(SpdxElementFactory.relationshipTargetFromResource(r));
 			return relatedElement.get();
 		}

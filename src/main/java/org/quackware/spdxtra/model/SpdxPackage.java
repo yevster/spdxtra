@@ -3,13 +3,17 @@ package org.quackware.spdxtra.model;
 import java.util.Optional;
 
 import org.apache.jena.ext.com.google.common.base.MoreObjects;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.quackware.spdxtra.Namespaces;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.quackware.spdxtra.SpdxUris;
 import org.quackware.spdxtra.NoneNoAssertionOrValue;
+import org.quackware.spdxtra.RdfResourceUpdate;
 
 public class SpdxPackage extends SpdxElement implements SpdxIdentifiable{
 
-	public static final String RDF_TYPE = Namespaces.SPDX_TERMS + "Package";
+	private static final Property PACKAGE_NAME_PROPERTY = new PropertyImpl(SpdxUris.SPDX_TERMS + "name");
+	public static final String RDF_TYPE = SpdxUris.SPDX_TERMS + "Package";
 
 	public SpdxPackage(Resource resource) {
 		super(resource);
@@ -21,7 +25,18 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable{
 	 * @return
 	 */
 	public String getName() {
-		return getPropertyAsString(Namespaces.SPDX_TERMS + "name");
+		return getPropertyAsString(PACKAGE_NAME_PROPERTY);
+	}
+	
+	/**
+	 * Generates an RDF update for the package name.
+	 * Causes no change to any data inside pkg.
+	 * @param pkg
+	 * @param newName
+	 * @return
+	 */
+	public static RdfResourceUpdate updatePackageName(SpdxPackage pkg, String newName){
+		return RdfResourceUpdate.updateStringProperty(pkg.getUri(), PACKAGE_NAME_PROPERTY, newName);
 	}
 
 	/**
@@ -30,7 +45,7 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable{
 	 * @return
 	 */
 	public Optional<String> getVersionInfo() {
-		return Optional.ofNullable(getPropertyAsString(Namespaces.SPDX_TERMS + "versionInfo"));
+		return Optional.ofNullable(getPropertyAsString(SpdxUris.SPDX_TERMS + "versionInfo"));
 	}
 
 	/**
@@ -39,7 +54,7 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable{
 	 * @return
 	 */
 	public NoneNoAssertionOrValue getCopyright() {
-		return getPropertyAsNoneNoAssertionOrValue(Namespaces.SPDX_TERMS + "copyrightText");
+		return getPropertyAsNoneNoAssertionOrValue(SpdxUris.SPDX_TERMS + "copyrightText");
 
 	}
 

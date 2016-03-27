@@ -15,12 +15,17 @@ public abstract class RdfResourceRepresentation {
 		this.rdfResource = rdfResource;
 	}
 
-	protected String getPropertyAsString(String propertyUri) {
-		Statement stmt = rdfResource.getProperty(new PropertyImpl(propertyUri));
+	protected String getPropertyAsString(Property property){
+		Statement stmt = rdfResource.getProperty(property);
 		if (stmt == null)
 			return null;
 		else
 			return stmt.getString();
+	}
+	
+	protected String getPropertyAsString(String propertyUri) {
+		return getPropertyAsString(new PropertyImpl(propertyUri));
+		
 	}
 
 	protected Resource getPropertyAsResource(String propertyUri) {
@@ -32,7 +37,7 @@ public abstract class RdfResourceRepresentation {
 		Resource r = getPropertyAsResource(propertyUri);
 		if (r.isLiteral()) {
 			return NoneNoAssertionOrValue.of(r.asLiteral().getString());
-		} else if ((Namespaces.SPDX_TERMS + "noassertion").equals(r.asResource().getURI()))
+		} else if ((SpdxUris.SPDX_TERMS + "noassertion").equals(r.asResource().getURI()))
 			return NoneNoAssertionOrValue.NO_ASSERTION;
 		else
 			return NoneNoAssertionOrValue.NONE;

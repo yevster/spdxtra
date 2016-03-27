@@ -6,24 +6,20 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Objects;
 
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.jena.ext.com.google.common.collect.ImmutableList;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -51,6 +47,12 @@ import com.github.jsonldjava.utils.JsonUtils;
  */
 public class ModelDataAccess {
 
+	public class IllegalUpdateException extends RuntimeException {
+		public IllegalUpdateException(String s) {
+			super(s);
+		}
+	}
+
 	private static final Logger logger = LoggerFactory.getLogger(ModelDataAccess.class);
 
 	private static String createSparqlQueryByType(String typeUri) {
@@ -67,48 +69,65 @@ public class ModelDataAccess {
 	 * 
 	 * @param inputFilePath
 	 *            Must be a valid path to an RDF file.
+	 * @param newDatasetPath
+	 *            The path to which to persist the RDF triple store with SPDX
+	 *            data.
 	 * @return
 	 */
-	public static DatasetInfo readFromFile(Path inputFilePath) {
+	public static Dataset readFromFile(Path inputFilePath, Path newDatasetPath) {
+		Objects.requireNonNull(newDatasetPath);
+
+		if (Files.notExists(newDatasetPath) || !Files.isDirectory(newDatasetPath)) {
+			throw new IllegalArgumentException("Invalid dataset path: " + newDatasetPath.toAbsolutePath().toString());
+		}
+		logger.debug("Creating new TDB in " + newDatasetPath.toAbsolutePath().toString());
+
+		Dataset dataset = TDBFactory.createDataset(newDatasetPath.toString());
+		readFromFile(inputFilePath, dataset);
+		return dataset;
+	}
+
+	/**
+	 * Reads RDF from inputFilePath into a provided dataset. NOTE: This behavior
+	 * is not tested with pre-populated datasets.
+	 * 
+	 * @param inputFilePath
+	 * @param dataset
+	 */
+	public static void readFromFile(Path inputFilePath, Dataset dataset) {
 		Objects.requireNonNull(inputFilePath);
 		if (Files.notExists(inputFilePath) && Files.isRegularFile(inputFilePath))
 			throw new IllegalArgumentException("File " + inputFilePath.toAbsolutePath().toString() + " does not exist");
-		final Path datasetPath;
-		try {
-			datasetPath = Files.createTempDirectory(inputFilePath.getFileName().toString());
-			logger.debug("Creating new TDB in " + datasetPath.toAbsolutePath().toString());
-		} catch (IOException ioe) {
-			throw new RuntimeException("Unable to create temp directory", ioe);
-		}
+
 		final InputStream is;
 		try {
 			is = Files.newInputStream(inputFilePath);
 		} catch (IOException ioe) {
 			throw new RuntimeException("Unable to read file " + inputFilePath.toAbsolutePath().toString(), ioe);
 		}
-		Dataset dataset = TDBFactory.createDataset(datasetPath.toAbsolutePath().toString());
+
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE);) {
 			dataset.getDefaultModel().read(is, null);
 			transaction.commit();
 		}
-		return new DatasetInfo(dataset, datasetPath);
+
 	}
 
 	/**
 	 * Produces prettified JSON-LD form of SPDX with SPDX terms spirited into
 	 * the context and out of the document.
 	 * 
-	 * @param datasetInfo
+	 * @param dataset
 	 * @return
 	 */
-	public static String toJsonLd(DatasetInfo datasetInfo) {
+	public static String toJsonLd(Dataset dataset) {
 		// TODO: Remove in-memory limitation
 		Object jsonLdRaw = null;
 		String jsonLdRawString = null;
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
-				ReadWrite.READ); StringWriter out = new StringWriter();) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);
+				StringWriter out = new StringWriter();) {
 			logger.debug("Starting raw JSON-LD output");
-			RDFDataMgr.write(out, datasetInfo.getDataset(), Lang.JSONLD);
+			RDFDataMgr.write(out, dataset, Lang.JSONLD);
 			out.flush();
 			jsonLdRawString = out.toString();
 			logger.debug("Raw jsonld produced.");
@@ -125,8 +144,7 @@ public class ModelDataAccess {
 		Object jsonLdContext = null;
 
 		try {
-			InputStream jsonContextStream = ModelDataAccess.class.getClassLoader()
-					.getResourceAsStream("spdxContext.json");
+			InputStream jsonContextStream = ModelDataAccess.class.getClassLoader().getResourceAsStream("spdxContext.json");
 			jsonLdContext = JsonUtils.fromInputStream(jsonContextStream);
 			jsonContextStream.close();
 		} catch (IOException e) {
@@ -148,12 +166,12 @@ public class ModelDataAccess {
 
 	}
 
-	public static String toJsonRdf(DatasetInfo datasetInfo) {
+	public static String toJsonRdf(Dataset dataset) {
 		String jsonRdfString = null;
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
-				ReadWrite.READ); StringWriter out = new StringWriter();) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);
+				StringWriter out = new StringWriter();) {
 			logger.debug("Starting raw JSON/RDF output");
-			RDFDataMgr.write(out, datasetInfo.getDataset().getDefaultModel(), RDFFormat.RDFJSON);
+			RDFDataMgr.write(out, dataset.getDefaultModel(), RDFFormat.RDFJSON);
 			out.flush();
 			jsonRdfString = out.toString();
 		} catch (IOException ioe) {
@@ -162,13 +180,12 @@ public class ModelDataAccess {
 		return jsonRdfString;
 	}
 
-	public static Iterable<SpdxPackage> getAllPackages(DatasetInfo datasetInfo) {
+	public static Iterable<SpdxPackage> getAllPackages(Dataset dataset) {
 
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
-				ReadWrite.READ);) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 
 			String sparql = createSparqlQueryByType(SpdxPackage.RDF_TYPE);
-			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
+			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
 
 			return MiscUtils.fromIteratorConsumer(results, (QuerySolution qs) -> {
@@ -183,15 +200,14 @@ public class ModelDataAccess {
 	 * specification, there should be exactly one in a file, so only the first
 	 * match will be returned.
 	 * 
-	 * @param datasetInfo
+	 * @param dataset
 	 * @return
 	 */
-	public static SpdxDocument getDocument(DatasetInfo datasetInfo) {
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
-				ReadWrite.READ);) {
+	public static SpdxDocument getDocument(Dataset dataset) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 
 			String sparql = createSparqlQueryByType(SpdxDocument.RDF_TYPE);
-			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
+			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
 			assert (results.hasNext()); // There should always be one document
 										// per SPDX File.
@@ -208,7 +224,7 @@ public class ModelDataAccess {
 	 */
 	public static Iterable<SpdxFile> getFilesForPackage(SpdxPackage pkg) {
 
-		Resource hasFileResource = pkg.getPropertyAsResource(Namespaces.SPDX_TERMS + "hasFile");
+		Resource hasFileResource = pkg.getPropertyAsResource(SpdxUris.SPDX_TERMS + "hasFile");
 		final StmtIterator it = hasFileResource.listProperties();
 
 		return MiscUtils.fromIteratorConsumer(it, (s) -> {
@@ -230,14 +246,15 @@ public class ModelDataAccess {
 	 * @param relationshipSource
 	 * @return
 	 */
-	public static Iterable<Relationship> getRelationships(DatasetInfo datasetInfo,
-			SpdxElement element) {
-		String sparql = createSparqlQueryBySubjectAndPredicate(element.getUri(),
-				Namespaces.SPDX_TERMS + "relationship");
+	public static Iterable<Relationship> getRelationships(Dataset dataset, SpdxElement element) {
+		String sparql = createSparqlQueryBySubjectAndPredicate(element.getUri(), SpdxUris.SPDX_TERMS + "relationship");
 
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(datasetInfo.getDataset(),
-				ReadWrite.READ);) {
-			QueryExecution qe = QueryExecutionFactory.create(sparql, datasetInfo.getDataset());
+		return getRelationshipsWithSparql(dataset, sparql);
+	}
+
+	private static Iterable<Relationship> getRelationshipsWithSparql(Dataset dataset, String sparql) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
 			return MiscUtils.fromIteratorConsumer(results, (QuerySolution qs) -> {
 				RDFNode relationshipNode = qs.get("o");
@@ -246,6 +263,30 @@ public class ModelDataAccess {
 			});
 
 		}
+	}
+
+	public static Iterable<Relationship> getRelationships(Dataset dataset, SpdxElement element, Relationship.Type relationshipType) {
+		String sparql = "SELECT ?o  WHERE { <"+element.getUri()+"> <" +  SpdxUris.SPDX_TERMS + "relationship> ?o.\n" 
+				+ "?o <" + SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
+		return getRelationshipsWithSparql(dataset, sparql);
+	}
+
+	public static void applyUpdatesInOneTransaction(Dataset dataset, Iterable<RdfResourceUpdate> updates) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE);) {
+			Model model = dataset.getDefaultModel();
+			for (RdfResourceUpdate update : updates) {
+				Resource resource = model.getResource(update.getResourceUri());
+				Statement s = resource.getProperty(update.getProperty());
+				if (s != null) {
+					s.changeObject(update.getNewValueBuilder().newValue(model));
+				} else {
+					resource.addProperty(update.getProperty(), update.getNewValueBuilder().newValue(model));
+				}
+
+			}
+			transaction.commit();
+		}
+
 	}
 
 }

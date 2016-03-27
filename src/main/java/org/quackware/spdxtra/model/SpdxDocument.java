@@ -1,7 +1,7 @@
 package org.quackware.spdxtra.model;
 
 import org.apache.jena.rdf.model.Resource;
-import org.quackware.spdxtra.Namespaces;
+import org.quackware.spdxtra.SpdxUris;
 import org.quackware.spdxtra.RdfResourceRepresentation;
 
 /**
@@ -9,7 +9,7 @@ import org.quackware.spdxtra.RdfResourceRepresentation;
  *
  */
 public class SpdxDocument extends SpdxElement {
-	public static final String RDF_TYPE = Namespaces.SPDX_TERMS + "SpdxDocument";
+	public static final String RDF_TYPE = SpdxUris.SPDX_TERMS + "SpdxDocument";
 
 	
 	public static class CreationInfo extends RdfResourceRepresentation {
@@ -23,11 +23,11 @@ public class SpdxDocument extends SpdxElement {
 	}
 
 	public String getName() {
-		return getPropertyAsString(Namespaces.SPDX_TERMS + "name");
+		return getPropertyAsString(SpdxUris.SPDX_TERMS + "name");
 	}
 
 	public String getSpecVersion() {
-		return getPropertyAsString(Namespaces.SPDX_TERMS + "specVersion");
+		return getPropertyAsString(SpdxUris.SPDX_TERMS + "specVersion");
 	}
 
 	public String getDocumentNamespace() {
