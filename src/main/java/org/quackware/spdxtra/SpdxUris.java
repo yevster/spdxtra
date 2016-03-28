@@ -6,4 +6,7 @@ public final class SpdxUris {
 	public static final String SPDX_TERMS = "http://spdx.org/rdf/terms#";
 	public static final String SPDX_RELATIONSHIP = SPDX_TERMS + "relationship";
 
+	public static final String LISTED_LICENSE_NAMESPACE = "http://spdx.org/licenses/";
+	
+
 }
