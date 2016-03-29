@@ -19,7 +19,7 @@ public class ListedLicenseTest {
 		assertEquals("Apache-2.0", license.get().getLicenseId());
 		assertTrue(license.get().isOsiApproved());
 		// Make sure the license does not get fetched twice
-		assertTrue(license == LicenseList.INSTANCE.getListedLicenseById("Apache-2.0"));
+		assertTrue(license.get() == LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
 	}
 
 	@Test

@@ -38,8 +38,8 @@ public abstract class RdfResourceRepresentation {
 		return stmt.getResource();
 	}
 
-	protected NoneNoAssertionOrValue getPropertyAsNoneNoAssertionOrValue(String propertyUri) {
-		Resource r = getPropertyAsResource(propertyUri);
+	protected NoneNoAssertionOrValue getPropertyAsNoneNoAssertionOrValue(Property property) {
+		Resource r = getPropertyAsResource(property);
 		if (r.isLiteral()) {
 			return NoneNoAssertionOrValue.of(r.asLiteral().getString());
 		} else if ((SpdxUris.SPDX_TERMS + "noassertion").equals(r.asResource().getURI()))

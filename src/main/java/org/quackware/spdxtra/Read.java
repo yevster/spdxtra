@@ -24,7 +24,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Selector;
 import org.apache.jena.rdf.model.SimpleSelector;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.riot.Lang;
@@ -56,7 +55,51 @@ import com.github.jsonldjava.utils.JsonUtils;
  *
  *         Copyright (c) 2016 Yev Bronshteyn. Committed under Apache-2.0 License
  */
-public class ModelDataAccess {
+public class Read {
+	public static class Document{
+
+		/**
+		 * Obtains the SPDX Document described in the provided dataset. Per SPDX 2.0
+		 * specification, there should be exactly one in a file, so only the first
+		 * match will be returned.
+		 * 
+		 * @param dataset
+		 * @return
+		 */
+		public static SpdxDocument get(Dataset dataset) {
+			try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+		
+				String sparql = Read.createSparqlQueryByType(SpdxDocument.RDF_TYPE);
+				QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
+				ResultSet results = qe.execSelect();
+				assert (results.hasNext()); // There should always be one document
+											// per SPDX File.
+				RDFNode subject = results.next().get("s");
+				assert (subject.isResource());
+				return new SpdxDocument(subject.asResource());
+			}
+		}
+		
+	}
+	public static class Package{
+
+		/**
+		 * Returns a lazy iteraterable of SpdxFiles.
+		 * 
+		 * @return
+		 */
+		public static Iterable<SpdxFile> getFiles(SpdxPackage pkg) {
+		
+			Resource hasFileResource = pkg.getPropertyAsResource(SpdxUris.SPDX_TERMS + "hasFile");
+			final StmtIterator it = hasFileResource.listProperties();
+		
+			return MiscUtils.fromIteratorConsumer(it, (s) -> {
+				String uri = s.getSubject().getURI();
+				return new SpdxFile(hasFileResource.getModel().getResource(uri));
+			});
+		}
+		
+	}
 
 	public class IllegalUpdateException extends RuntimeException {
 		public IllegalUpdateException(String s) {
@@ -64,7 +107,7 @@ public class ModelDataAccess {
 		}
 	}
 
-	private static final Logger logger = LoggerFactory.getLogger(ModelDataAccess.class);
+	private static final Logger logger = LoggerFactory.getLogger(Read.class);
 
 	private static String createSparqlQueryByType(String typeUri) {
 		return "SELECT ?s  WHERE { ?s  <" + RdfResourceRepresentation.RDF_TYPE_PROPERTY + ">  <" + typeUri + "> }";
@@ -85,7 +128,7 @@ public class ModelDataAccess {
 	 *            data.
 	 * @return
 	 */
-	public static Dataset readFromFile(Path inputFilePath, Path newDatasetPath) {
+	public static Dataset rdfIntoNewDataset(Path inputFilePath, Path newDatasetPath) {
 		Objects.requireNonNull(newDatasetPath);
 
 		if (Files.notExists(newDatasetPath) || !Files.isDirectory(newDatasetPath)) {
@@ -94,7 +137,7 @@ public class ModelDataAccess {
 		logger.debug("Creating new TDB in " + newDatasetPath.toAbsolutePath().toString());
 
 		Dataset dataset = TDBFactory.createDataset(newDatasetPath.toString());
-		readFromFile(inputFilePath, dataset);
+		rdfIntoDataset(inputFilePath, dataset);
 		return dataset;
 	}
 
@@ -105,7 +148,7 @@ public class ModelDataAccess {
 	 * @param inputFilePath
 	 * @param dataset
 	 */
-	public static void readFromFile(Path inputFilePath, Dataset dataset) {
+	public static void rdfIntoDataset(Path inputFilePath, Dataset dataset) {
 		Objects.requireNonNull(inputFilePath);
 		if (Files.notExists(inputFilePath) && Files.isRegularFile(inputFilePath))
 			throw new IllegalArgumentException("File " + inputFilePath.toAbsolutePath().toString() + " does not exist");
@@ -124,7 +167,7 @@ public class ModelDataAccess {
 
 	}
 
-	public static void writeRdfXml(Dataset dataset, Path outputFilePath) throws IOException {
+	public static void outputRdfXml(Dataset dataset, Path outputFilePath) throws IOException {
 		Objects.requireNonNull(dataset);
 		Objects.requireNonNull(outputFilePath);
 		Files.createFile(outputFilePath);
@@ -143,7 +186,7 @@ public class ModelDataAccess {
 	 * @param dataset
 	 * @return
 	 */
-	public static String toJsonLd(Dataset dataset) {
+	public static String outputJsonLd(Dataset dataset) {
 		// TODO: Remove in-memory limitation
 		Object jsonLdRaw = null;
 		String jsonLdRawString = null;
@@ -167,7 +210,7 @@ public class ModelDataAccess {
 		Object jsonLdContext = null;
 
 		try {
-			InputStream jsonContextStream = ModelDataAccess.class.getClassLoader().getResourceAsStream("spdxContext.json");
+			InputStream jsonContextStream = Read.class.getClassLoader().getResourceAsStream("spdxContext.json");
 			jsonLdContext = JsonUtils.fromInputStream(jsonContextStream);
 			jsonContextStream.close();
 		} catch (IOException e) {
@@ -219,44 +262,6 @@ public class ModelDataAccess {
 	}
 
 	/**
-	 * Obtains the SPDX Document described in the provided model. Per SPDX 2.0
-	 * specification, there should be exactly one in a file, so only the first
-	 * match will be returned.
-	 * 
-	 * @param dataset
-	 * @return
-	 */
-	public static SpdxDocument getDocument(Dataset dataset) {
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
-
-			String sparql = createSparqlQueryByType(SpdxDocument.RDF_TYPE);
-			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
-			ResultSet results = qe.execSelect();
-			assert (results.hasNext()); // There should always be one document
-										// per SPDX File.
-			RDFNode subject = results.next().get("s");
-			assert (subject.isResource());
-			return new SpdxDocument(subject.asResource());
-		}
-	}
-
-	/**
-	 * Returns a lazy iteraterable of SpdxFiles.
-	 * 
-	 * @return
-	 */
-	public static Iterable<SpdxFile> getFilesForPackage(SpdxPackage pkg) {
-
-		Resource hasFileResource = pkg.getPropertyAsResource(SpdxUris.SPDX_TERMS + "hasFile");
-		final StmtIterator it = hasFileResource.listProperties();
-
-		return MiscUtils.fromIteratorConsumer(it, (s) -> {
-			String uri = s.getSubject().getURI();
-			return new SpdxFile(hasFileResource.getModel().getResource(uri));
-		});
-	}
-
-	/**
 	 * Returns all the relationships element has and the targets of those
 	 * relationships. Does not return the relationships for which
 	 * relationshipSource itself is a target.
@@ -292,29 +297,6 @@ public class ModelDataAccess {
 		String sparql = "SELECT ?o  WHERE { <" + element.getUri() + "> <" + SpdxUris.SPDX_RELATIONSHIP + "> ?o.\n" + "?o <"
 				+ SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
 		return getRelationshipsWithSparql(dataset, sparql);
-	}
-
-	public static void applyUpdatesInOneTransaction(Dataset dataset, Iterable<RdfResourceUpdate> updates) {
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE);) {
-			Model model = dataset.getDefaultModel();
-			for (RdfResourceUpdate update : updates) {
-				Resource resource = model.getResource(update.getResourceUri());
-
-				if (update.getCreateNewProperty()) {
-					resource.addProperty(update.getProperty(), update.getNewValueBuilder().newValue(model));
-				} else {
-					Statement s = resource.getProperty(update.getProperty());
-					if (s != null) {
-						s.changeObject(update.getNewValueBuilder().newValue(model));
-					} else {
-						resource.addProperty(update.getProperty(), update.getNewValueBuilder().newValue(model));
-					}
-				}
-
-			}
-			transaction.commit();
-		}
-
 	}
 
 	public static Optional<Resource> lookupResourceByUri(Dataset dataset, String uri) {

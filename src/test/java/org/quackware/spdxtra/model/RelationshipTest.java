@@ -9,9 +9,10 @@ import org.apache.jena.ext.com.google.common.collect.ImmutableList;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.query.Dataset;
 import org.junit.Test;
-import org.quackware.spdxtra.ModelDataAccess;
+import org.quackware.spdxtra.Read;
 import org.quackware.spdxtra.RdfResourceUpdate;
 import org.quackware.spdxtra.TestModelOperations;
+import org.quackware.spdxtra.Write;
 import org.quackware.spdxtra.model.Relationship.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,19 +49,19 @@ public class RelationshipTest {
 	@Test
 	public void testAddRelationship(){
 		Dataset dataset = TestModelOperations.getDefaultDataSet();
-		SpdxPackage pkg = new SpdxPackage(ModelDataAccess.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
+		SpdxPackage pkg = new SpdxPackage(Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 		
 		//We start with a file with two relationships
-		SpdxFile file = new SpdxFile(ModelDataAccess.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-164").get());
-		List<Relationship> originalRelationships = Lists.newLinkedList(ModelDataAccess.getRelationships(dataset, file));
+		SpdxFile file = new SpdxFile(Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-164").get());
+		List<Relationship> originalRelationships = Lists.newLinkedList(Read.getRelationships(dataset, file));
 		assertEquals(1, originalRelationships.size());
 		//Now, let's add a new perposterous relationship.
 		String comment = "This is a garbage relationship";
 		RdfResourceUpdate sillyUpdate = Relationship.addRelationship(file, pkg, Optional.of(comment), Relationship.Type.EXPANDED_FROM_ARCHIVE);
-		ModelDataAccess.applyUpdatesInOneTransaction(dataset, ImmutableList.of(sillyUpdate));
+		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(sillyUpdate));
 		
 		//1 relationships + 1 new relationship = 2 relationships!
-		List<Relationship> newRelationships = Lists.newLinkedList(ModelDataAccess.getRelationships(dataset, file));
+		List<Relationship> newRelationships = Lists.newLinkedList(Read.getRelationships(dataset, file));
 		assertEquals(2, newRelationships.size());
 		//Let's grab the newbie!
 		newRelationships.removeAll(originalRelationships);

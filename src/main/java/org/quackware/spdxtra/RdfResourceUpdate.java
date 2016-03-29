@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.quackware.spdxtra.ModelDataAccess.IllegalUpdateException;
+import org.quackware.spdxtra.Read.IllegalUpdateException;
 
 public class RdfResourceUpdate {
 	private String resourceUri;

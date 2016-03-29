@@ -26,6 +26,7 @@ import org.apache.jena.tdb.TDBFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.quackware.spdxtra.Read.Document;
 import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.SpdxDocument;
 import org.quackware.spdxtra.model.SpdxFile;
@@ -48,7 +49,7 @@ public class TestModelOperations {
 			Path spdxPath = Paths.get(TestModelOperations.class.getClassLoader().getResource("spdx-tools-2.0.0-RC1.spdx.rdf").toURI());
 			Dataset memoryDataset = TDBFactory.createDataset();
 			assertTrue(Files.exists(spdxPath));
-			ModelDataAccess.readFromFile(spdxPath, memoryDataset);
+			Read.rdfIntoDataset(spdxPath, memoryDataset);
 			return memoryDataset;
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("Illegal SPDX input path", e);
@@ -71,7 +72,7 @@ public class TestModelOperations {
 	@Test
 	public void testJsonLd() throws IOException {
 		Dataset dataset = getDefaultDataSet();
-		String jsonLd = ModelDataAccess.toJsonLd(dataset);
+		String jsonLd = Read.outputJsonLd(dataset);
 		assertTrue(StringUtils.isNotBlank(jsonLd));
 		// Weak, but temporary (is it ever?)
 		assertTrue(StringUtils.contains(jsonLd, "@graph"));
@@ -81,19 +82,19 @@ public class TestModelOperations {
 	@Test
 	public void testJsonRdf() throws IOException {
 		Dataset dataset = getDefaultDataSet();
-		String jsonRdf = ModelDataAccess.toJsonRdf(dataset);
+		String jsonRdf = Read.toJsonRdf(dataset);
 		assertTrue(StringUtils.isNotBlank(jsonRdf));
 	}
 
 	@Test
 	public void testSpdxDocumentInfoAndRelationships() {
 		Dataset dataset = getDefaultDataSet();
-		SpdxDocument doc = ModelDataAccess.getDocument(dataset);
+		SpdxDocument doc = Document.get(dataset);
 		assertEquals("SPDX-2.0", doc.getSpecVersion());
 		assertEquals("SPDX tools", doc.getName());
 		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT", doc.getDocumentNamespace());
 
-		Iterable<Relationship> related = ModelDataAccess.getRelationships(dataset, doc);
+		Iterable<Relationship> related = Read.getRelationships(dataset, doc);
 		Iterator<Relationship> it = related.iterator();
 
 		// There should only be one relationship - describes.
@@ -114,10 +115,10 @@ public class TestModelOperations {
 	@Test
 	public void testElementRetrieval(){
 		Dataset dataset = getDefaultDataSet();
-		Resource docResource = ModelDataAccess.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT").orElse(null);
+		Resource docResource = Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT").orElse(null);
 		assertNotNull(docResource);
 		
-		Optional<Resource> shouldBeEmpty = ModelDataAccess.lookupResourceByUri(dataset, "foo://No esta aqui");
+		Optional<Resource> shouldBeEmpty = Read.lookupResourceByUri(dataset, "foo://No esta aqui");
 		assertEquals(Optional.empty(), shouldBeEmpty);
 		
 		
