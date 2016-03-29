@@ -11,8 +11,8 @@ import org.quackware.spdxtra.RdfResourceUpdate;
  * Describes an SPDX document.
  *
  */
-public class SpdxDocument extends SpdxElement {
-	public static final String RDF_TYPE = SpdxUris.SPDX_TERMS + "SpdxDocument";
+public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
+	public static final String RDF_TYPE = SpdxUris.SPDX_DOCUMENT;
 	
 	private static final Property nameProperty = new PropertyImpl(SpdxUris.SPDX_TERMS + "name");
 

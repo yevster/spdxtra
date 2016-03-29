@@ -137,6 +137,7 @@ public class Read {
 		logger.debug("Creating new TDB in " + newDatasetPath.toAbsolutePath().toString());
 
 		Dataset dataset = TDBFactory.createDataset(newDatasetPath.toString());
+		dataset.getDefaultModel().getNsPrefixMap().put("spdx", SpdxUris.SPDX_TERMS);
 		rdfIntoDataset(inputFilePath, dataset);
 		return dataset;
 	}
