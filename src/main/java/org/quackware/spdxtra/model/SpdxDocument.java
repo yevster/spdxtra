@@ -1,11 +1,10 @@
 package org.quackware.spdxtra.model;
 
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.quackware.spdxtra.SpdxUris;
 import org.quackware.spdxtra.RdfResourceRepresentation;
 import org.quackware.spdxtra.RdfResourceUpdate;
+import org.quackware.spdxtra.SpdxProperties;
 
 /**
  * Describes an SPDX document.
@@ -13,9 +12,6 @@ import org.quackware.spdxtra.RdfResourceUpdate;
  */
 public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 	public static final String RDF_TYPE = SpdxUris.SPDX_DOCUMENT;
-	
-	private static final Property nameProperty = new PropertyImpl(SpdxUris.SPDX_TERMS + "name");
-
 	
 	public static class CreationInfo extends RdfResourceRepresentation {
 		CreationInfo(Resource r) {
@@ -28,7 +24,7 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 	}
 
 	public String getName() {
-		return getPropertyAsString(nameProperty);
+		return getPropertyAsString(SpdxProperties.SPDX_NAME);
 	}
 
 	public String getSpecVersion() {
@@ -41,7 +37,7 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 	
 	/* UPDATE GENERATORS */
 	public static RdfResourceUpdate setName(SpdxDocument doc, String name){
-		return RdfResourceUpdate.updateStringProperty(doc.getUri(), nameProperty, name);
+		return RdfResourceUpdate.updateStringProperty(doc.getUri(), SpdxProperties.SPDX_NAME, name);
 	}
 	
 	/* Addition generators */

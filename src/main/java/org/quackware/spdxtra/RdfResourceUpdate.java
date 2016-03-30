@@ -5,9 +5,19 @@ import java.util.Objects;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.quackware.spdxtra.Read.IllegalUpdateException;
+import org.quackware.spdxtra.Write.ModelUpdate;
 
-public class RdfResourceUpdate {
+/**
+ * Represents the most common kind of SPDX model update - where the value of a property is set to a literal or a resource.
+ * While instances of this class may be returned by other methods, you should never have to instantiate it. Instead, use the 
+ * methods in subclasses of {@link Write} to generate updates.
+ * @author yevster
+ *
+ */
+public class RdfResourceUpdate implements ModelUpdate{
 	private String resourceUri;
 	private Property property;
 	private UpdateRdfNodeBuilder newValueBuilder;
@@ -58,6 +68,23 @@ public class RdfResourceUpdate {
 		this.property = Objects.requireNonNull(property);
 		this.newValueBuilder = Objects.requireNonNull(newValueBuilder);
 		this.createNewProperty = createNewProperty;
+	}
+	
+	@Override
+	public void apply(Model model) {
+		Resource resource = model.getResource(this.getResourceUri());
+		
+		if (this.getCreateNewProperty()) {
+			resource.addProperty(this.getProperty(), this.getNewValueBuilder().newValue(model));
+		} else {
+			Statement s = resource.getProperty(this.getProperty());
+			if (s != null) {
+				s.changeObject(this.getNewValueBuilder().newValue(model));
+			} else {
+				resource.addProperty(this.getProperty(), this.getNewValueBuilder().newValue(model));
+			}
+		}
+
 	}
 
 	public String getResourceUri() {

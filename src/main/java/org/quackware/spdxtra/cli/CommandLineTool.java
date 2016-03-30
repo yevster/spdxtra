@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.tdb.TDBFactory;
 import org.quackware.spdxtra.Read;
+import org.quackware.spdxtra.Write;
 
 public class CommandLineTool {
 	public enum Operations {
@@ -79,7 +80,7 @@ public class CommandLineTool {
 		// requires an in-memory model anyway.
 		final Dataset dataset = TDBFactory.createDataset();
 		try {
-			Read.rdfIntoDataset(inputPath, dataset);
+			Write.rdfIntoDataset(inputPath, dataset);
 			String jsonLd = Read.outputJsonLd(dataset);
 			FileUtils.write(outputPath.toFile(), jsonLd, Charset.forName(Charsets.UTF_16.name()));
 		} catch (IOException ioe) {

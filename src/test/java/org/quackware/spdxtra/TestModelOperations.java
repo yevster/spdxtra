@@ -49,7 +49,7 @@ public class TestModelOperations {
 			Path spdxPath = Paths.get(TestModelOperations.class.getClassLoader().getResource("spdx-tools-2.0.0-RC1.spdx.rdf").toURI());
 			Dataset memoryDataset = TDBFactory.createDataset();
 			assertTrue(Files.exists(spdxPath));
-			Read.rdfIntoDataset(spdxPath, memoryDataset);
+			Write.rdfIntoDataset(spdxPath, memoryDataset);
 			return memoryDataset;
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("Illegal SPDX input path", e);
@@ -77,13 +77,6 @@ public class TestModelOperations {
 		// Weak, but temporary (is it ever?)
 		assertTrue(StringUtils.contains(jsonLd, "@graph"));
 		assertTrue(StringUtils.contains(jsonLd, "\"rdfs\" : \"http://www.w3.org/2000/01/rdf-schema#\""));
-	}
-
-	@Test
-	public void testJsonRdf() throws IOException {
-		Dataset dataset = getDefaultDataSet();
-		String jsonRdf = Read.toJsonRdf(dataset);
-		assertTrue(StringUtils.isNotBlank(jsonRdf));
 	}
 
 	@Test
