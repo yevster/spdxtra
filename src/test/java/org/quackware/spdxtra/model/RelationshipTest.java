@@ -57,7 +57,7 @@ public class RelationshipTest {
 		assertEquals(1, originalRelationships.size());
 		//Now, let's add a new perposterous relationship.
 		String comment = "This is a garbage relationship";
-		RdfResourceUpdate sillyUpdate = Relationship.addRelationship(file, pkg, Optional.of(comment), Relationship.Type.EXPANDED_FROM_ARCHIVE);
+		RdfResourceUpdate sillyUpdate = Write.addRelationship(file, pkg, Optional.of(comment), Relationship.Type.EXPANDED_FROM_ARCHIVE);
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(sillyUpdate));
 		
 		//1 relationships + 1 new relationship = 2 relationships!

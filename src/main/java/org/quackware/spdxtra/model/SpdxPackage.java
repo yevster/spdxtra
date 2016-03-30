@@ -8,9 +8,9 @@ import org.quackware.spdxtra.SpdxUris;
 import org.quackware.spdxtra.NoneNoAssertionOrValue;
 import org.quackware.spdxtra.SpdxProperties;
 
-public class SpdxPackage extends SpdxElement implements SpdxIdentifiable{
+public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 
-	public static final String RDF_TYPE = SpdxUris.SPDX_TERMS + "Package";
+	public static final String RDF_TYPE = SpdxUris.SPDX_PACKAGE;
 
 	public SpdxPackage(Resource resource) {
 		super(resource);
@@ -22,9 +22,9 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable{
 	 * @return
 	 */
 	public String getName() {
-		return getPropertyAsString(SpdxProperties.PACKAGE_NAME);
+		return getPropertyAsString(SpdxProperties.SPDX_NAME);
 	}
-	
+
 	/**
 	 * Returns the SPDX version info, if present in the document.
 	 * 

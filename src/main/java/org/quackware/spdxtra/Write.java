@@ -6,6 +6,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
@@ -16,7 +17,11 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
+import org.quackware.spdxtra.model.Relationship;
+import org.quackware.spdxtra.model.Relationship.Type;
+import org.quackware.spdxtra.model.SpdxElement;
 import org.quackware.spdxtra.model.SpdxPackage;
 
 public final class Write {
@@ -43,10 +48,10 @@ public final class Write {
 			if (StringUtils.isBlank(baseUrl) || StringUtils.containsAny(baseUrl, '#')) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
 			}
-			if (StringUtils.isBlank(spdxId) || StringUtils.containsAny(spdxId, '#', ':') || !StringUtils.startsWith(spdxId, "SPDXRef-")) {
+			if (!Validate.spdxId(spdxId)) {
 				throw new IllegalArgumentException("Illegal spdxId. Must be of the form SPDXRef-*");
 			}
-			if (StringUtils.isBlank(name) || StringUtils.containsAny(name, '\n','\r')) {
+			if (StringUtils.isBlank(name) || StringUtils.containsAny(name, '\n', '\r')) {
 				throw new IllegalArgumentException("Name cannot be null or blank and must be a single line of text.");
 			}
 			final String uri = baseUrl + "#" + spdxId;
@@ -61,6 +66,23 @@ public final class Write {
 	}
 
 	public static final class Document {
+		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
+				final String packageSpdxName) {
+			if (!Validate.spdxId(packageSpdxId)) {
+				throw new IllegalArgumentException("SPDX ID must be in the form SPDXRef-*");
+			}
+			final String packageUri = documentBaseUrl + "#" + packageSpdxId;
+			final String documentUri = documentBaseUrl + "#" + documentSpdxId;
+
+			return (model) -> {
+				Resource spdxPackageType = model.createResource(SpdxUris.SPDX_PACKAGE);
+				Resource newPackage = model.createResource(packageUri, spdxPackageType);
+				newPackage.addLiteral(SpdxProperties.SPDX_NAME, packageSpdxName);
+				Write.addRelationship(documentUri, packageUri, Optional.empty(), Type.DESCRIBES).apply(model);
+				Write.addRelationship(packageUri, documentUri, Optional.empty(), Type.DESCRIBED_BY).apply(model);
+
+			};
+		}
 
 	}
 
@@ -74,8 +96,18 @@ public final class Write {
 		 * @param newName
 		 * @return
 		 */
-		public static RdfResourceUpdate name(SpdxPackage pkg, String newName) {
-			return RdfResourceUpdate.updateStringProperty(pkg.getUri(), SpdxProperties.PACKAGE_NAME, newName);
+		public static RdfResourceUpdate name(String uri, String newName) {
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.SPDX_NAME, newName);
+		}
+		
+		/**
+		 * Geneartes an RDF update for the package's copyright text.
+		 * @param pkg
+		 * @param copyrightText
+		 * @return
+		 */
+		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText){
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT, copyrightText.getLiteralOrUriValue());
 		}
 
 	}
@@ -105,12 +137,12 @@ public final class Write {
 	 */
 	public static Dataset rdfIntoNewDataset(Path inputFilePath, Path newDatasetPath) {
 		Objects.requireNonNull(newDatasetPath);
-	
+
 		if (Files.notExists(newDatasetPath) || !Files.isDirectory(newDatasetPath)) {
 			throw new IllegalArgumentException("Invalid dataset path: " + newDatasetPath.toAbsolutePath().toString());
 		}
 		Read.logger.debug("Creating new TDB in " + newDatasetPath.toAbsolutePath().toString());
-	
+
 		Dataset dataset = TDBFactory.createDataset(newDatasetPath.toString());
 		dataset.getDefaultModel().getGraph().getPrefixMapping().setNsPrefix("spdx", SpdxUris.SPDX_TERMS);
 		Write.rdfIntoDataset(inputFilePath, dataset);
@@ -128,19 +160,38 @@ public final class Write {
 		Objects.requireNonNull(inputFilePath);
 		if (Files.notExists(inputFilePath) && Files.isRegularFile(inputFilePath))
 			throw new IllegalArgumentException("File " + inputFilePath.toAbsolutePath().toString() + " does not exist");
-	
+
 		final InputStream is;
 		try {
 			is = Files.newInputStream(inputFilePath);
 		} catch (IOException ioe) {
 			throw new RuntimeException("Unable to read file " + inputFilePath.toAbsolutePath().toString(), ioe);
 		}
-	
+
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE);) {
 			dataset.getDefaultModel().read(is, null);
 			transaction.commit();
 		}
-	
+
+	}
+
+	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target, final Optional<String> comment,
+			final Relationship.Type type) {
+		return addRelationship(source.getUri(), target.getUri(), comment, type);
+	}
+
+	public static RdfResourceUpdate addRelationship(String sourceUri, String targetUri, final Optional<String> comment,
+			final Relationship.Type type) {
+
+		return new RdfResourceUpdate(sourceUri, SpdxProperties.SPDX_RELATIONSHIP, true, (Model m) -> {
+
+			Resource innerRelationship = m.createResource(new ResourceImpl(SpdxUris.SPDX_TERMS + "Relationship"));
+			innerRelationship.addProperty(Relationship.relationshipTypeProperty, m.createResource(type.getUri()));
+			if (comment.isPresent())
+				innerRelationship.addProperty(SpdxProperties.RDF_COMMENT, m.createLiteral(comment.get()));
+			innerRelationship.addProperty(Relationship.relatedElementProperty, m.getResource(targetUri));
+			return innerRelationship;
+		});
 	}
 
 }

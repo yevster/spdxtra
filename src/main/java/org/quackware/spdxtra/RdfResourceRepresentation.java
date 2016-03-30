@@ -9,8 +9,6 @@ import org.apache.jena.rdf.model.impl.PropertyImpl;
 
 public abstract class RdfResourceRepresentation {
 	private final Resource rdfResource;
-	public static final Property RDF_TYPE_PROPERTY = new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-	public static final Property RDF_COMMENT_PROPERTY = new PropertyImpl(SpdxUris.RDFS_NAMESPACE, "comment");
 
 	protected RdfResourceRepresentation(Resource rdfResource) {
 		this.rdfResource = rdfResource;
@@ -39,10 +37,11 @@ public abstract class RdfResourceRepresentation {
 	}
 
 	protected NoneNoAssertionOrValue getPropertyAsNoneNoAssertionOrValue(Property property) {
-		Resource r = getPropertyAsResource(property);
-		if (r.isLiteral()) {
-			return NoneNoAssertionOrValue.of(r.asLiteral().getString());
-		} else if ((SpdxUris.SPDX_TERMS + "noassertion").equals(r.asResource().getURI()))
+		Statement stmt = rdfResource.getProperty(property);
+
+		if (stmt.getObject().isLiteral()) {
+			return NoneNoAssertionOrValue.of(stmt.getObject().asLiteral().getString());
+		} else if ((SpdxUris.SPDX_TERMS + "noassertion").equals(stmt.getObject().asResource().getURI()))
 			return NoneNoAssertionOrValue.NO_ASSERTION;
 		else
 			return NoneNoAssertionOrValue.NONE;

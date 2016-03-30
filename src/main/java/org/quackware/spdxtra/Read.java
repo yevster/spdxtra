@@ -109,7 +109,7 @@ public class Read {
 	static final Logger logger = LoggerFactory.getLogger(Read.class);
 
 	private static String createSparqlQueryByType(String typeUri) {
-		return "SELECT ?s  WHERE { ?s  <" + RdfResourceRepresentation.RDF_TYPE_PROPERTY + ">  <" + typeUri + "> }";
+		return "SELECT ?s  WHERE { ?s  <" + SpdxProperties.RDF_TYPE + ">  <" + typeUri + "> }";
 	}
 
 	private static String createSparqlQueryBySubjectAndPredicate(String subjectUri, String predicateUri) {
@@ -184,7 +184,7 @@ public class Read {
 
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 
-			String sparql = createSparqlQueryByType(SpdxPackage.RDF_TYPE);
+			String sparql = createSparqlQueryByType(SpdxUris.SPDX_PACKAGE);
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
 
