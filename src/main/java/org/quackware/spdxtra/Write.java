@@ -19,6 +19,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
+import org.quackware.spdxtra.model.License;
 import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.Relationship.Type;
 import org.quackware.spdxtra.model.SpdxElement;
@@ -66,8 +67,8 @@ public final class Write {
 	}
 
 	public static final class Document {
-		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
-				final String packageSpdxName) {
+		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId,
+				String packageSpdxId, final String packageSpdxName) {
 			if (!Validate.spdxId(packageSpdxId)) {
 				throw new IllegalArgumentException("SPDX ID must be in the form SPDXRef-*");
 			}
@@ -99,15 +100,40 @@ public final class Write {
 		public static RdfResourceUpdate name(String uri, String newName) {
 			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.SPDX_NAME, newName);
 		}
-		
+
 		/**
 		 * Geneartes an RDF update for the package's copyright text.
+		 * 
 		 * @param pkg
 		 * @param copyrightText
 		 * @return
 		 */
-		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText){
-			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT, copyrightText.getLiteralOrUriValue());
+		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText) {
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT,
+					copyrightText.getLiteralOrUriValue());
+		}
+
+		/**
+		 * Generates an RDF update for the package's declared license
+		 * 
+		 * @param spdxPackage
+		 * @param license
+		 * @return
+		 */
+		public static RdfResourceUpdate declaredLicense(SpdxPackage spdxPackage, final License license) {
+			return declaredLicense(spdxPackage.getUri(), license);
+		}
+
+		/**
+		 * Generates an RDF update for the package's declared license
+		 * 
+		 * @param packageUri
+		 * @param license
+		 * @return
+		 */
+		public static RdfResourceUpdate declaredLicense(String packageUri, final License license) {
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
+					(m) -> license.getRdfNode());
 		}
 
 	}
@@ -175,8 +201,8 @@ public final class Write {
 
 	}
 
-	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target, final Optional<String> comment,
-			final Relationship.Type type) {
+	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target,
+			final Optional<String> comment, final Relationship.Type type) {
 		return addRelationship(source.getUri(), target.getUri(), comment, type);
 	}
 

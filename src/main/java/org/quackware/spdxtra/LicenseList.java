@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -14,15 +13,14 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.quackware.spdxtra.model.License;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
-import com.github.andrewoma.dexx.collection.Map;
 
 import net.rootdev.javardfa.ParserFactory;
 import net.rootdev.javardfa.ParserFactory.Format;
@@ -35,6 +33,7 @@ public enum LicenseList {
 
 	public static class ListedLicense extends License {
 		private static final Property osiApprovedProperty = new PropertyImpl(SpdxUris.SPDX_TERMS, "isOsiApproved");
+		private final RDFNode rdfNode;
 		private String name;
 		private String id;
 		private boolean osiApproved;
@@ -46,10 +45,10 @@ public enum LicenseList {
 		 * over the good parts and let them go out of scope.
 		 */
 		ListedLicense(Resource r) {
-			super(null);
 			this.id = r.getProperty(licenseIdProperty).getString();
 			this.name = r.getProperty(licenseNameProperty).getString();
 			this.osiApproved = r.getProperty(osiApprovedProperty).getBoolean();
+			this.rdfNode = ResourceFactory.createResource(SpdxUris.LISTED_LICENSE_NAMESPACE + id);
 		}
 
 		/**
@@ -75,6 +74,10 @@ public enum LicenseList {
 		 */
 		public boolean isOsiApproved() {
 			return osiApproved;
+		}
+
+		public RDFNode getRdfNode() {
+			return rdfNode;
 		}
 	}
 
@@ -127,7 +130,8 @@ public enum LicenseList {
 			}
 			if (response.getStatusLine().getStatusCode() != 200) {
 				throw new LicenseRetrievalException("Error accessing " + licenseUri + ". Status returned: "
-						+ response.getStatusLine().getStatusCode() + ". Reason:" + response.getStatusLine().getReasonPhrase());
+						+ response.getStatusLine().getStatusCode() + ". Reason:"
+						+ response.getStatusLine().getReasonPhrase());
 			}
 
 			new HTMLRDFaReader().read(model, response.getEntity().getContent(), "http://www.w3.org/1999/xhtml:html");

@@ -1,7 +1,6 @@
 package org.quackware.spdxtra.model;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,8 +8,8 @@ import org.apache.jena.ext.com.google.common.collect.ImmutableList;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.query.Dataset;
 import org.junit.Test;
-import org.quackware.spdxtra.Read;
 import org.quackware.spdxtra.RdfResourceUpdate;
+import org.quackware.spdxtra.Read;
 import org.quackware.spdxtra.TestModelOperations;
 import org.quackware.spdxtra.Write;
 import org.quackware.spdxtra.model.Relationship.Type;
