@@ -1,8 +1,6 @@
 package org.quackware.spdxtra;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -80,24 +78,37 @@ public class TestPackageOperations {
 		RdfResourceUpdate update = Write.Package.declaredLicense(pkg,
 				LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
 		assertEquals(SpdxProperties.LICENSE_DECLARED, update.getProperty());
-		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update));
+		
+		//And a concluded license to NOASSERT
+		RdfResourceUpdate update2 = Write.Package.concludedLicense(pkg, License.NOASSERTION);
+		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
 
 		pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 		assertEquals("http://spdx.org/licenses/Apache-2.0", pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
+		assertEquals("http://spdx.org/rdf/terms#noassertion", pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
 
-		// Set the declared license to NONE
+		// Set the declared license to NONE and concluded license to GPL-2.0
 		update = Write.Package.declaredLicense(pkg, License.NONE);
-		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update));
-		// Look closer to the metal. Did we create a duplicate property?
+		update2 = Write.Package.concludedLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("GPL-2.0").get());
+		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
+		
+		
+		// Look closer to the metal. Did we create a duplicate property...
 		Resource pkgResource = Read
 				.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get();
+		//...for declared?
 		StmtIterator stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_DECLARED);
 		assertTrue("Missing declared license assignment.", stmtIt.hasNext());
 		String licenseUri = stmtIt.next().getObject().asResource().getURI();
 		assertEquals("http://spdx.org/rdf/terms#none", licenseUri);
 		assertTrue("Duplicate declared license assignment.", !stmtIt.hasNext());
-		
+		//...for concluded?
+		stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_CONCLUDED);
+		assertTrue("Missing concluded license assignment.", stmtIt.hasNext());
+		licenseUri = stmtIt.next().getObject().asResource().getURI();
+		assertEquals("http://spdx.org/licenses/GPL-2.0", licenseUri);
+		assertTrue("Duplicate concluded license assignment.", !stmtIt.hasNext());
 	}
 
 	@Test
@@ -156,7 +167,7 @@ public class TestPackageOperations {
 		assertEquals(packageSpdxId, pkg.getSpdxId());
 		assertEquals(baseUrl + "#" + packageSpdxId, pkg.getUri());
 		assertEquals(copyrightText, pkg.getCopyright().getLiteralOrUriValue());
-
+		assertNull(pkg.getPropertyAsString(SpdxProperties.LICENSE_CONCLUDED));
 		/*
 		 * Now, let's verify the inverse relationship
 		 */

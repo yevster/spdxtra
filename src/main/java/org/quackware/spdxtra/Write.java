@@ -19,6 +19,7 @@ import org.quackware.spdxtra.model.License;
 import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.Relationship.Type;
 import org.quackware.spdxtra.model.SpdxElement;
+import org.quackware.spdxtra.model.SpdxFile;
 import org.quackware.spdxtra.model.SpdxPackage;
 
 public final class Write {
@@ -127,7 +128,55 @@ public final class Write {
 			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
 					(m) -> license.getRdfNode());
 		}
+		
+		/**
+		 * Generates an RDF update for the package's concluded license
+		 * 
+		 * @param spdxPackage
+		 * @param license
+		 * @return
+		 */
+		public static RdfResourceUpdate concludedLicense(SpdxPackage spdxPackage, final License license) {
+			return concludedLicense(spdxPackage.getUri(), license);
+		}
+		
+		/**
+		 * Generates an RDF update for the package's concluded license
+		 * 
+		 * @param packageUri
+		 * @param license
+		 * @return
+		 */
+		public static RdfResourceUpdate concludedLicense(String packageUri, final License license) {
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false,
+					(m) -> license.getRdfNode());
+		}
 
+	}
+	
+	public static final class File{
+		/**
+		 * Generates an RDF update for the file's concluded license
+		 * 
+		 * @param spdxPackage
+		 * @param license
+		 * @return
+		 */
+		public static RdfResourceUpdate concludedLicense(SpdxFile spdxFile, final License license) {
+			return concludedLicense(spdxFile.getUri(), license);
+		}
+		
+		/**
+		 * Generates an RDF update for the file's concluded license
+		 * 
+		 * @param packageUri
+		 * @param license
+		 * @return
+		 */
+		public static RdfResourceUpdate concludedLicense(String fileUri, final License license){
+			//Exactly the same property as in Package, so not duplicating.
+			return Write.Package.concludedLicense(fileUri, license);
+		}
 	}
 
 	public static void applyUpdatesInOneTransaction(Dataset dataset, Iterable<? extends ModelUpdate> updates) {
