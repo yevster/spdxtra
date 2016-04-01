@@ -84,13 +84,12 @@ public class TestModelOperations {
 		assertEquals("SPDX tools", doc.getName());
 		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT", doc.getDocumentNamespace());
 
-		Iterable<Relationship> related = Read.getRelationships(dataset, doc);
-		Iterator<Relationship> it = related.iterator();
+		Iterator<Relationship> related = Read.getRelationships(dataset, doc);
 
 		// There should only be one relationship - describes.
-		assertTrue(it.hasNext());
-		Relationship describesRelationship = it.next();
-		assertTrue(!it.hasNext());
+		assertTrue(related.hasNext());
+		Relationship describesRelationship = related.next();
+		assertTrue(!related.hasNext());
 		assertEquals(Relationship.Type.DESCRIBES, describesRelationship.getType());
 		assertTrue(describesRelationship.getRelatedElement() instanceof SpdxPackage);
 		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.getRelatedElement().getUri());

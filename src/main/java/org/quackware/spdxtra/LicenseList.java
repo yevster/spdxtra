@@ -18,14 +18,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.quackware.spdxtra.model.License;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 
-import net.rootdev.javardfa.ParserFactory;
-import net.rootdev.javardfa.ParserFactory.Format;
-import net.rootdev.javardfa.StatementSink;
-import net.rootdev.javardfa.jena.JenaStatementSink;
 import net.rootdev.javardfa.jena.RDFaReader.HTMLRDFaReader;
 
 public enum LicenseList {
@@ -82,6 +75,7 @@ public enum LicenseList {
 	}
 
 	public static class LicenseRetrievalException extends RuntimeException {
+		
 		public LicenseRetrievalException(String s, Throwable cause) {
 			super(s, cause);
 		}
@@ -146,15 +140,5 @@ public enum LicenseList {
 
 	}
 
-	private static final void populateModelFromRdfa(String content, Model targetModel) {
-		StatementSink sink = new JenaStatementSink(targetModel);
-		try {
-			XMLReader parser = ParserFactory.createReaderForFormat(sink, Format.HTML);
-			parser.parse(new InputSource(content));
-		} catch (SAXException | IOException se) {
-			throw new LicenseList.LicenseRetrievalException("Unable to parse retrieved license", se);
-		}
-
-	}
 
 }

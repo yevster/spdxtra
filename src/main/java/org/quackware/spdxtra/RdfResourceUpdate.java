@@ -7,7 +7,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.quackware.spdxtra.Read.IllegalUpdateException;
 import org.quackware.spdxtra.Write.ModelUpdate;
 
 /**

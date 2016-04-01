@@ -1,27 +1,29 @@
 package org.quackware.spdxtra;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.jena.ext.com.google.common.collect.ImmutableList;
-import org.apache.jena.ext.com.google.common.collect.Iterables;
+import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.junit.Test;
-import org.quackware.spdxtra.LicenseList.ListedLicense;
 import org.quackware.spdxtra.Read.Document;
 import org.quackware.spdxtra.Read.Package;
 import org.quackware.spdxtra.Write.ModelUpdate;
 import org.quackware.spdxtra.model.License;
 import org.quackware.spdxtra.model.Relationship;
 import org.quackware.spdxtra.model.SpdxDocument;
+import org.quackware.spdxtra.model.SpdxFile;
 import org.quackware.spdxtra.model.SpdxPackage;
 
 public class TestPackageOperations {
@@ -29,13 +31,14 @@ public class TestPackageOperations {
 	@Test
 	public void testPackageRead() throws IOException {
 		Dataset dataset = TestModelOperations.getDefaultDataSet();
-		Iterable<SpdxPackage> packages = Read.getAllPackages(dataset);
-		SpdxPackage pkg = Iterables.find(packages, (p) -> "SPDXRef-1".equals(p.getSpdxId()));
+		Iterator<SpdxPackage> packages = Read.getAllPackages(dataset);
+		SpdxPackage pkg = Iterators.find(packages, (p) -> "SPDXRef-1".equals(p.getSpdxId()));
 
 		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
 		assertEquals("SPDX tools", pkg.getName());
 		assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
-		assertEquals(12, Iterables.size(Package.getFiles(pkg)));
+		List<SpdxFile> files = ImmutableList.copyOf(Package.getFiles(pkg));
+		assertEquals(12, files.size());
 	}
 
 	@Test
@@ -43,7 +46,7 @@ public class TestPackageOperations {
 		Dataset dataset = TestModelOperations.getDefaultDataSet();
 		SpdxDocument doc = Document.get(dataset);
 		List<Relationship> relationships = Lists
-				.newLinkedList(Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES));
+				.newArrayList(Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES));
 		assertEquals(1, relationships.size());
 		assertEquals(SpdxPackage.class, relationships.get(0).getRelatedElement().getClass());
 		SpdxPackage pkg = (SpdxPackage) relationships.get(0).getRelatedElement();
@@ -63,7 +66,7 @@ public class TestPackageOperations {
 		Write.applyUpdatesInOneTransaction(dataset, updates);
 
 		// Reload the package from the document model
-		pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).iterator().next()
+		pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).next()
 				.getRelatedElement();
 		assertEquals(newName, pkg.getName());
 	}

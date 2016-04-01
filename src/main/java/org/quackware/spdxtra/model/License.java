@@ -2,7 +2,6 @@ package org.quackware.spdxtra.model;
 
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.quackware.spdxtra.SpdxUris;

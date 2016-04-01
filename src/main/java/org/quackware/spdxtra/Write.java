@@ -9,14 +9,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 import org.quackware.spdxtra.model.License;
@@ -26,15 +22,11 @@ import org.quackware.spdxtra.model.SpdxElement;
 import org.quackware.spdxtra.model.SpdxPackage;
 
 public final class Write {
+	@FunctionalInterface
 	public static interface ModelUpdate {
 		void apply(Model model);
 	}
 
-	/**
-	 * Only useful when creating new resources, so this shouldn't be used
-	 * anywhere else.
-	 */
-	private static final Property rdfTypeProperty = new PropertyImpl(SpdxUris.RDF_NAMESPACE, "type");
 
 	public static final class New {
 		/**

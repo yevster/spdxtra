@@ -7,10 +7,12 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.jena.ext.com.google.common.collect.Iterators;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -31,7 +33,6 @@ import org.quackware.spdxtra.model.SpdxDocument;
 import org.quackware.spdxtra.model.SpdxElement;
 import org.quackware.spdxtra.model.SpdxFile;
 import org.quackware.spdxtra.model.SpdxPackage;
-import org.quackware.spdxtra.util.MiscUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,23 +81,17 @@ public class Read {
 		 * 
 		 * @return
 		 */
-		public static Iterable<SpdxFile> getFiles(SpdxPackage pkg) {
+		public static Iterator<SpdxFile> getFiles(SpdxPackage pkg) {
 		
 			Resource hasFileResource = pkg.getPropertyAsResource(SpdxUris.SPDX_TERMS + "hasFile");
 			final StmtIterator it = hasFileResource.listProperties();
 		
-			return MiscUtils.fromIteratorConsumer(it, (s) -> {
+			return Iterators.transform(it, (s) -> {
 				String uri = s.getSubject().getURI();
 				return new SpdxFile(hasFileResource.getModel().getResource(uri));
 			});
 		}
 		
-	}
-
-	public class IllegalUpdateException extends RuntimeException {
-		public IllegalUpdateException(String s) {
-			super(s);
-		}
 	}
 
 	static final Logger logger = LoggerFactory.getLogger(Read.class);
@@ -173,7 +168,7 @@ public class Read {
 
 	}
 
-	public static Iterable<SpdxPackage> getAllPackages(Dataset dataset) {
+	public static Iterator<SpdxPackage> getAllPackages(Dataset dataset) {
 
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 
@@ -181,7 +176,7 @@ public class Read {
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
 
-			return MiscUtils.fromIteratorConsumer(results, (QuerySolution qs) -> {
+			return Iterators.transform(results, (QuerySolution qs) -> {
 				RDFNode subject = qs.get("s");
 				return new SpdxPackage(subject.asResource());
 			});
@@ -201,17 +196,17 @@ public class Read {
 	 * @param relationshipSource
 	 * @return
 	 */
-	public static Iterable<Relationship> getRelationships(Dataset dataset, SpdxElement element) {
+	public static Iterator<Relationship> getRelationships(Dataset dataset, SpdxElement element) {
 		String sparql = createSparqlQueryBySubjectAndPredicate(element.getUri(), SpdxUris.SPDX_RELATIONSHIP);
 
 		return getRelationshipsWithSparql(dataset, sparql);
 	}
 
-	private static Iterable<Relationship> getRelationshipsWithSparql(Dataset dataset, String sparql) {
+	private static Iterator<Relationship> getRelationshipsWithSparql(Dataset dataset, String sparql) {
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
-			return MiscUtils.fromIteratorConsumer(results, (QuerySolution qs) -> {
+			return Iterators.transform(results, (QuerySolution qs) -> {
 				RDFNode relationshipNode = qs.get("o");
 				assert (relationshipNode.isResource());
 				return new Relationship(relationshipNode.asResource());
@@ -220,7 +215,7 @@ public class Read {
 		}
 	}
 
-	public static Iterable<Relationship> getRelationships(Dataset dataset, SpdxElement element, Relationship.Type relationshipType) {
+	public static Iterator<Relationship> getRelationships(Dataset dataset, SpdxElement element, Relationship.Type relationshipType) {
 		String sparql = "SELECT ?o  WHERE { <" + element.getUri() + "> <" + SpdxUris.SPDX_RELATIONSHIP + "> ?o.\n" + "?o <"
 				+ SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
 		return getRelationshipsWithSparql(dataset, sparql);

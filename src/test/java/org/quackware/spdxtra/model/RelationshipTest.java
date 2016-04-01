@@ -52,7 +52,7 @@ public class RelationshipTest {
 		
 		//We start with a file with two relationships
 		SpdxFile file = new SpdxFile(Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-164").get());
-		List<Relationship> originalRelationships = Lists.newLinkedList(Read.getRelationships(dataset, file));
+		List<Relationship> originalRelationships = Lists.newArrayList(Read.getRelationships(dataset, file));
 		assertEquals(1, originalRelationships.size());
 		//Now, let's add a new perposterous relationship.
 		String comment = "This is a garbage relationship";
@@ -60,7 +60,7 @@ public class RelationshipTest {
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(sillyUpdate));
 		
 		//1 relationships + 1 new relationship = 2 relationships!
-		List<Relationship> newRelationships = Lists.newLinkedList(Read.getRelationships(dataset, file));
+		List<Relationship> newRelationships = Lists.newArrayList(Read.getRelationships(dataset, file));
 		assertEquals(2, newRelationships.size());
 		//Let's grab the newbie!
 		newRelationships.removeAll(originalRelationships);
