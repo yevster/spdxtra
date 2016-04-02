@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.jena.ext.com.google.common.collect.ImmutableList;
-import org.apache.jena.ext.com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.apache.jena.query.Dataset;
 import org.junit.Test;
 import org.quackware.spdxtra.RdfResourceUpdate;

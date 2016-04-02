@@ -1,6 +1,6 @@
 package org.quackware.spdxtra.model;
 
-import org.apache.jena.ext.com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects;
 import org.apache.jena.rdf.model.Resource;
 import org.quackware.spdxtra.SpdxUris;
 

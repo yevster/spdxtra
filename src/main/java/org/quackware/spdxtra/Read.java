@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.jena.ext.com.google.common.collect.Iterators;
+import com.google.common.collect.Iterators;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;

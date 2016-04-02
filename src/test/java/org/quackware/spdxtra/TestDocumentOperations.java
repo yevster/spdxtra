@@ -3,7 +3,7 @@ package org.quackware.spdxtra;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.apache.jena.ext.com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.junit.Test;
