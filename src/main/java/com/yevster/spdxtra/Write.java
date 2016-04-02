@@ -29,7 +29,6 @@ public final class Write {
 		void apply(Model model);
 	}
 
-
 	public static final class New {
 		/**
 		 * Creates a dataset update that creates a document.
@@ -55,14 +54,16 @@ public final class Write {
 				Resource type = model.createResource(SpdxUris.SPDX_DOCUMENT);
 				Resource newResource = model.createResource(uri, type);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
+				newResource.addProperty(SpdxProperties.DATA_LICENSE, model.createResource("http://spdx.org/licenses/CC0-1.0"));
+					
 			};
 
 		}
 	}
 
 	public static final class Document {
-		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId,
-				String packageSpdxId, final String packageSpdxName) {
+		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
+				final String packageSpdxName) {
 			if (!Validate.spdxId(packageSpdxId)) {
 				throw new IllegalArgumentException("SPDX ID must be in the form SPDXRef-*");
 			}
@@ -103,8 +104,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText) {
-			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT,
-					copyrightText.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT, copyrightText.getLiteralOrUriValue());
 		}
 
 		/**
@@ -126,10 +126,9 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate declaredLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
-					(m) -> license.getRdfNode());
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false, (m) -> license.getRdfNode());
 		}
-		
+
 		/**
 		 * Generates an RDF update for the package's concluded license
 		 * 
@@ -140,7 +139,7 @@ public final class Write {
 		public static RdfResourceUpdate concludedLicense(SpdxPackage spdxPackage, final License license) {
 			return concludedLicense(spdxPackage.getUri(), license);
 		}
-		
+
 		/**
 		 * Generates an RDF update for the package's concluded license
 		 * 
@@ -149,13 +148,12 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate concludedLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false,
-					(m) -> license.getRdfNode());
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false, (m) -> license.getRdfNode());
 		}
 
 	}
-	
-	public static final class File{
+
+	public static final class File {
 		/**
 		 * Generates an RDF update for the file's concluded license
 		 * 
@@ -166,7 +164,7 @@ public final class Write {
 		public static RdfResourceUpdate concludedLicense(SpdxFile spdxFile, final License license) {
 			return concludedLicense(spdxFile.getUri(), license);
 		}
-		
+
 		/**
 		 * Generates an RDF update for the file's concluded license
 		 * 
@@ -174,8 +172,8 @@ public final class Write {
 		 * @param license
 		 * @return
 		 */
-		public static RdfResourceUpdate concludedLicense(String fileUri, final License license){
-			//Exactly the same property as in Package, so not duplicating.
+		public static RdfResourceUpdate concludedLicense(String fileUri, final License license) {
+			// Exactly the same property as in Package, so not duplicating.
 			return Write.Package.concludedLicense(fileUri, license);
 		}
 	}
@@ -243,8 +241,8 @@ public final class Write {
 
 	}
 
-	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target,
-			final Optional<String> comment, final Relationship.Type type) {
+	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target, final Optional<String> comment,
+			final Relationship.Type type) {
 		return addRelationship(source.getUri(), target.getUri(), comment, type);
 	}
 
