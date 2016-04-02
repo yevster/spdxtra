@@ -16,12 +16,13 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 
+import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.License;
 import com.yevster.spdxtra.model.Relationship;
+import com.yevster.spdxtra.model.Relationship.Type;
 import com.yevster.spdxtra.model.SpdxElement;
 import com.yevster.spdxtra.model.SpdxFile;
 import com.yevster.spdxtra.model.SpdxPackage;
-import com.yevster.spdxtra.model.Relationship.Type;
 
 public final class Write {
 	@FunctionalInterface
@@ -37,7 +38,7 @@ public final class Write {
 		 * @param spdxId
 		 * @return
 		 */
-		public static ModelUpdate document(String baseUrl, String spdxId, String name) {
+		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator, Creator... additionalCreators) {
 			// validation
 			if (StringUtils.isBlank(baseUrl) || StringUtils.containsAny(baseUrl, '#')) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
@@ -55,7 +56,14 @@ public final class Write {
 				Resource newResource = model.createResource(uri, type);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
 				newResource.addProperty(SpdxProperties.DATA_LICENSE, model.createResource("http://spdx.org/licenses/CC0-1.0"));
-					
+
+				Resource creationInfo = model.createResource(SpdxResourceTypes.CREATION_INFO_TYPE);
+				creationInfo.addProperty(SpdxProperties.CREATOR, creator.toString());
+				for (Creator curCreator : additionalCreators) {
+					creationInfo.addProperty(SpdxProperties.CREATOR, curCreator.toString());
+				}
+
+				newResource.addProperty(SpdxProperties.CREATION_INFO, creationInfo);
 			};
 
 		}
