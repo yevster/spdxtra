@@ -7,18 +7,14 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.input.ReaderInputStream;
-import com.google.common.collect.Iterators;
-import com.yevster.spdxtra.model.Relationship;
-import com.yevster.spdxtra.model.SpdxDocument;
-import com.yevster.spdxtra.model.SpdxElement;
-import com.yevster.spdxtra.model.SpdxFile;
-import com.yevster.spdxtra.model.SpdxPackage;
-
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -41,6 +37,12 @@ import com.github.jsonldjava.core.JsonLdError;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
+import com.google.common.collect.Iterators;
+import com.yevster.spdxtra.model.Relationship;
+import com.yevster.spdxtra.model.SpdxDocument;
+import com.yevster.spdxtra.model.SpdxElement;
+import com.yevster.spdxtra.model.SpdxFile;
+import com.yevster.spdxtra.model.SpdxPackage;
 
 /**
  * @author yevster
@@ -50,49 +52,51 @@ import com.github.jsonldjava.utils.JsonUtils;
  *         Copyright (c) 2016 Yev Bronshteyn. Committed under Apache-2.0 License
  */
 public class Read {
-	public static class Document{
+	public static class Document {
 
 		/**
-		 * Obtains the SPDX Document described in the provided dataset. Per SPDX 2.0
-		 * specification, there should be exactly one in a file, so only the first
-		 * match will be returned.
+		 * Obtains the SPDX Document described in the provided dataset. Per SPDX
+		 * 2.0 specification, there should be exactly one in a file, so only the
+		 * first match will be returned.
 		 * 
 		 * @param dataset
 		 * @return
 		 */
 		public static SpdxDocument get(Dataset dataset) {
-			try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
-		
+			try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset,
+					ReadWrite.READ);) {
+
 				String sparql = Read.createSparqlQueryByType(SpdxDocument.RDF_TYPE);
 				QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 				ResultSet results = qe.execSelect();
-				assert (results.hasNext()); // There should always be one document
+				assert (results.hasNext()); // There should always be one
+											// document
 											// per SPDX File.
 				RDFNode subject = results.next().get("s");
 				assert (subject.isResource());
 				return new SpdxDocument(subject.asResource());
 			}
 		}
-		
+
 	}
-	public static class Package{
+
+	public static class Package {
 
 		/**
 		 * Returns a lazy iteraterable of SpdxFiles.
 		 * 
 		 * @return
 		 */
-		public static Iterator<SpdxFile> getFiles(SpdxPackage pkg) {
-		
+		public static Stream<SpdxFile> getFiles(SpdxPackage pkg) {
+
 			Resource hasFileResource = pkg.getPropertyAsResource(SpdxUris.SPDX_TERMS + "hasFile");
 			final StmtIterator it = hasFileResource.listProperties();
-		
-			return Iterators.transform(it, (s) -> {
+			return StreamSupport.stream(Spliterators.spliteratorUnknownSize(Iterators.transform(it, (s) -> {
 				String uri = s.getSubject().getURI();
 				return new SpdxFile(hasFileResource.getModel().getResource(uri));
-			});
+			}), Spliterator.ORDERED | Spliterator.NONNULL), false);
 		}
-		
+
 	}
 
 	static final Logger logger = LoggerFactory.getLogger(Read.class);
@@ -112,7 +116,8 @@ public class Read {
 		try (FileOutputStream fos = new FileOutputStream(outputFilePath.toFile());
 				DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 			WriterGraphRIOT writer = RDFDataMgr.createGraphWriter(RDFFormat.RDFXML_PRETTY);
-			writer.write(fos, dataset.asDatasetGraph().getDefaultGraph(), PrefixMapFactory.create(dataset.getDefaultModel().getNsPrefixMap()), null, dataset.getContext());
+			writer.write(fos, dataset.asDatasetGraph().getDefaultGraph(),
+					PrefixMapFactory.create(dataset.getDefaultModel().getNsPrefixMap()), null, dataset.getContext());
 		}
 	}
 
@@ -169,15 +174,17 @@ public class Read {
 
 	}
 
-	public static Iterator<SpdxPackage> getAllPackages(Dataset dataset) {
+	public static Stream<SpdxPackage> getAllPackages(Dataset dataset) {
 
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 
 			String sparql = createSparqlQueryByType(SpdxUris.SPDX_PACKAGE);
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
+			Stream<QuerySolution> querySolutionStream = StreamSupport.stream(
+					Spliterators.spliteratorUnknownSize(results, Spliterator.ORDERED | Spliterator.NONNULL), false);
 
-			return Iterators.transform(results, (QuerySolution qs) -> {
+			return querySolutionStream.map((QuerySolution qs) -> {
 				RDFNode subject = qs.get("s");
 				return new SpdxPackage(subject.asResource());
 			});
@@ -197,17 +204,20 @@ public class Read {
 	 * @param relationshipSource
 	 * @return
 	 */
-	public static Iterator<Relationship> getRelationships(Dataset dataset, SpdxElement element) {
+	public static Stream<Relationship> getRelationships(Dataset dataset, SpdxElement element) {
 		String sparql = createSparqlQueryBySubjectAndPredicate(element.getUri(), SpdxUris.SPDX_RELATIONSHIP);
 
 		return getRelationshipsWithSparql(dataset, sparql);
 	}
 
-	private static Iterator<Relationship> getRelationshipsWithSparql(Dataset dataset, String sparql) {
+	private static Stream<Relationship> getRelationshipsWithSparql(Dataset dataset, String sparql) {
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
-			return Iterators.transform(results, (QuerySolution qs) -> {
+			Stream<QuerySolution> solutionStream = StreamSupport.stream(
+					Spliterators.spliteratorUnknownSize(results, Spliterator.ORDERED | Spliterator.NONNULL), false);
+
+			return solutionStream.map((QuerySolution qs) -> {
 				RDFNode relationshipNode = qs.get("o");
 				assert (relationshipNode.isResource());
 				return new Relationship(relationshipNode.asResource());
@@ -216,9 +226,10 @@ public class Read {
 		}
 	}
 
-	public static Iterator<Relationship> getRelationships(Dataset dataset, SpdxElement element, Relationship.Type relationshipType) {
-		String sparql = "SELECT ?o  WHERE { <" + element.getUri() + "> <" + SpdxUris.SPDX_RELATIONSHIP + "> ?o.\n" + "?o <"
-				+ SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
+	public static Stream<Relationship> getRelationships(Dataset dataset, SpdxElement element,
+			Relationship.Type relationshipType) {
+		String sparql = "SELECT ?o  WHERE { <" + element.getUri() + "> <" + SpdxUris.SPDX_RELATIONSHIP + "> ?o.\n"
+				+ "?o <" + SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
 		return getRelationshipsWithSparql(dataset, sparql);
 	}
 

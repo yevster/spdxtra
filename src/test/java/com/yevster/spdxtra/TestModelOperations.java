@@ -50,7 +50,8 @@ public class TestModelOperations {
 
 	public static Dataset getDefaultDataSet() {
 		try {
-			Path spdxPath = Paths.get(TestModelOperations.class.getClassLoader().getResource("spdx-tools-2.0.0-RC1.spdx.rdf").toURI());
+			Path spdxPath = Paths.get(
+					TestModelOperations.class.getClassLoader().getResource("spdx-tools-2.0.0-RC1.spdx.rdf").toURI());
 			Dataset memoryDataset = TDBFactory.createDataset();
 			assertTrue(Files.exists(spdxPath));
 			Write.rdfIntoDataset(spdxPath, memoryDataset);
@@ -91,7 +92,7 @@ public class TestModelOperations {
 		assertEquals("SPDX tools", doc.getName());
 		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1", doc.getDocumentNamespace());
 
-		Iterator<Relationship> related = Read.getRelationships(dataset, doc);
+		Iterator<Relationship> related = Read.getRelationships(dataset, doc).iterator();
 
 		// There should only be one relationship - describes.
 		assertTrue(related.hasNext());
@@ -99,15 +100,17 @@ public class TestModelOperations {
 		assertTrue(!related.hasNext());
 		assertEquals(Relationship.Type.DESCRIBES, describesRelationship.getType());
 		assertTrue(describesRelationship.getRelatedElement() instanceof SpdxPackage);
-		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.getRelatedElement().getUri());
-		assertEquals("[DESCRIBES](SpdxPackage)http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.toString());
+		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1",
+				describesRelationship.getRelatedElement().getUri());
+		assertEquals("[DESCRIBES](SpdxPackage)http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1",
+				describesRelationship.toString());
 
 		// Verify the date
 		ZonedDateTime creationTime = doc.getCreationTime();
-		ZonedDateTime expectedCreationTime = ZonedDateTime.of(LocalDateTime.of(2015, 8, 3, 21, 38, 16), ZoneId.of("UTC"));
+		ZonedDateTime expectedCreationTime = ZonedDateTime.of(LocalDateTime.of(2015, 8, 3, 21, 38, 16),
+				ZoneId.of("UTC"));
 		assertEquals(expectedCreationTime, creationTime);
 
-		
 		// Make sure we don't create a new object each time we call
 		// getRelatedElement().
 		assertTrue(describesRelationship.getRelatedElement() == describesRelationship.getRelatedElement());
@@ -117,7 +120,8 @@ public class TestModelOperations {
 	@Test
 	public void testElementRetrieval() {
 		Dataset dataset = getDefaultDataSet();
-		Resource docResource = Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT")
+		Resource docResource = Read
+				.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT")
 				.orElse(null);
 		assertNotNull(docResource);
 

@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -37,13 +39,13 @@ public class TestPackageOperations {
 	@Test
 	public void testPackageRead() throws IOException {
 		Dataset dataset = TestModelOperations.getDefaultDataSet();
-		Iterator<SpdxPackage> packages = Read.getAllPackages(dataset);
-		SpdxPackage pkg = Iterators.find(packages, (p) -> "SPDXRef-1".equals(p.getSpdxId()));
+		Stream<SpdxPackage> packages = Read.getAllPackages(dataset);
+		SpdxPackage pkg = packages.filter((p) -> "SPDXRef-1".equals(p.getSpdxId())).findFirst().get();
 
 		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
 		assertEquals("SPDX tools", pkg.getName());
 		assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
-		List<SpdxFile> files = ImmutableList.copyOf(Package.getFiles(pkg));
+		List<SpdxFile> files = Package.getFiles(pkg).collect(Collectors.toList());
 		assertEquals(12, files.size());
 	}
 
@@ -51,7 +53,8 @@ public class TestPackageOperations {
 	public void testPackageFieldUpdates() {
 		Dataset dataset = TestModelOperations.getDefaultDataSet();
 		SpdxDocument doc = Document.get(dataset);
-		List<Relationship> relationships = Lists.newArrayList(Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES));
+		List<Relationship> relationships = Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES)
+				.collect(Collectors.toList());
 		assertEquals(1, relationships.size());
 		assertEquals(SpdxPackage.class, relationships.get(0).getRelatedElement().getClass());
 		SpdxPackage pkg = (SpdxPackage) relationships.get(0).getRelatedElement();
@@ -71,7 +74,8 @@ public class TestPackageOperations {
 		Write.applyUpdatesInOneTransaction(dataset, updates);
 
 		// Reload the package from the document model
-		pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).next().getRelatedElement();
+		pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).findFirst().get()
+				.getRelatedElement();
 		assertEquals(newName, pkg.getName());
 	}
 
@@ -81,16 +85,20 @@ public class TestPackageOperations {
 		SpdxPackage pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 		// Let's set a declared license.
-		RdfResourceUpdate update = Write.Package.declaredLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
+		RdfResourceUpdate update = Write.Package.declaredLicense(pkg,
+				LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
 		assertEquals(SpdxProperties.LICENSE_DECLARED, update.getProperty());
 
 		// And a concluded license to NOASSERT
 		RdfResourceUpdate update2 = Write.Package.concludedLicense(pkg, License.NOASSERTION);
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
 
-		pkg = new SpdxPackage(Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
-		assertEquals("http://spdx.org/licenses/Apache-2.0", pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
-		assertEquals("http://spdx.org/rdf/terms#noassertion", pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
+		pkg = new SpdxPackage(
+				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
+		assertEquals("http://spdx.org/licenses/Apache-2.0",
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
+		assertEquals("http://spdx.org/rdf/terms#noassertion",
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
 
 		// Set the declared license to NONE and concluded license to GPL-2.0
 		update = Write.Package.declaredLicense(pkg, License.NONE);
@@ -98,7 +106,8 @@ public class TestPackageOperations {
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
 
 		// Look closer to the metal. Did we create a duplicate property...
-		Resource pkgResource = Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get();
+		Resource pkgResource = Read
+				.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get();
 		// ...for declared?
 		StmtIterator stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_DECLARED);
 		assertTrue("Missing declared license assignment.", stmtIt.hasNext());
@@ -132,7 +141,8 @@ public class TestPackageOperations {
 		final String copyrightText = "Copyright(c) 2016 Joyco, Inc.\nAll rights reserved.\nSo don'tcha be messin'";
 
 		List<ModelUpdate> updates = new LinkedList<>();
-		updates.add(Write.New.document(baseUrl, documentSpdxId, "El documento fantastico!", Creator.tool("Testy McTestface")));
+		updates.add(Write.New.document(baseUrl, documentSpdxId, "El documento fantastico!",
+				Creator.tool("Testy McTestface")));
 
 		if (separateTransactions) {
 			Write.applyUpdatesInOneTransaction(dataset, updates);
@@ -145,7 +155,8 @@ public class TestPackageOperations {
 			updates.clear();
 		}
 
-		updates.add(Write.Package.copyrightText(baseUrl + "#" + packageSpdxId, NoneNoAssertionOrValue.of(copyrightText)));
+		updates.add(
+				Write.Package.copyrightText(baseUrl + "#" + packageSpdxId, NoneNoAssertionOrValue.of(copyrightText)));
 		Write.applyUpdatesInOneTransaction(dataset, updates);
 
 		/*
@@ -153,7 +164,7 @@ public class TestPackageOperations {
 		 */
 		SpdxDocument doc = new SpdxDocument(Read.lookupResourceByUri(dataset, baseUrl + "#" + documentSpdxId).get());
 		assertNotNull(doc);
-		List<Relationship> relationships = ImmutableList.copyOf(Read.getRelationships(dataset, doc));
+		List<Relationship> relationships = Read.getRelationships(dataset, doc).collect(Collectors.toList());
 		assertEquals(1, relationships.size());
 
 		Relationship docDescribesPackage = relationships.get(0);
@@ -172,7 +183,7 @@ public class TestPackageOperations {
 		/*
 		 * Now, let's verify the inverse relationship
 		 */
-		List<Relationship> pkgRelationships = ImmutableList.copyOf(Read.getRelationships(dataset, pkg));
+		List<Relationship> pkgRelationships = Read.getRelationships(dataset, pkg).collect(Collectors.toList());
 		assertEquals(1, pkgRelationships.size());
 		Relationship pkgDescribedByDoc = pkgRelationships.get(0);
 		assertEquals(Relationship.Type.DESCRIBED_BY, pkgDescribedByDoc.getType());
