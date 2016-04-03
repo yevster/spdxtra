@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -13,12 +15,14 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.License;
 import com.yevster.spdxtra.model.Relationship;
+import com.yevster.spdxtra.model.SpdxDocument;
 import com.yevster.spdxtra.model.Relationship.Type;
 import com.yevster.spdxtra.model.SpdxElement;
 import com.yevster.spdxtra.model.SpdxFile;
@@ -38,7 +42,8 @@ public final class Write {
 		 * @param spdxId
 		 * @return
 		 */
-		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator, Creator... additionalCreators) {
+		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator,
+				Creator... additionalCreators) {
 			// validation
 			if (StringUtils.isBlank(baseUrl) || StringUtils.containsAny(baseUrl, '#')) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
@@ -55,10 +60,13 @@ public final class Write {
 				Resource type = model.createResource(SpdxUris.SPDX_DOCUMENT);
 				Resource newResource = model.createResource(uri, type);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
-				newResource.addProperty(SpdxProperties.DATA_LICENSE, model.createResource("http://spdx.org/licenses/CC0-1.0"));
-
+				newResource.addProperty(SpdxProperties.DATA_LICENSE,
+						model.createResource("http://spdx.org/licenses/CC0-1.0"));
+				newResource.addProperty(SpdxProperties.SPEC_VERSION, Constants.DEFAULT_SPDX_VERSION);
 				Resource creationInfo = model.createResource(SpdxResourceTypes.CREATION_INFO_TYPE);
 				creationInfo.addProperty(SpdxProperties.CREATOR, creator.toString());
+				creationInfo.addProperty(SpdxProperties.CREATION_DATE,
+						ZonedDateTime.now(ZoneId.of("UTC")).format(Constants.SPDX_DATE_FORMATTER));
 				for (Creator curCreator : additionalCreators) {
 					creationInfo.addProperty(SpdxProperties.CREATOR, curCreator.toString());
 				}
@@ -70,8 +78,17 @@ public final class Write {
 	}
 
 	public static final class Document {
-		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
-				final String packageSpdxName) {
+		/*
+		 * For internal use inside a transaction only.
+		 */
+		private static final Resource getDocumentResource(Model model, String baseUrl, String documentSpdxId) {
+			final String documentUri = baseUrl + "#" + documentSpdxId;
+			return model.createResource(documentUri);
+
+		}
+
+		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId,
+				String packageSpdxId, final String packageSpdxName) {
 			if (!Validate.spdxId(packageSpdxId)) {
 				throw new IllegalArgumentException("SPDX ID must be in the form SPDXRef-*");
 			}
@@ -86,6 +103,37 @@ public final class Write {
 				Write.addRelationship(packageUri, documentUri, Optional.empty(), Type.DESCRIBED_BY).apply(model);
 
 			};
+		}
+
+		/**
+		 * Updates the document's creation date.
+		 * @param document
+		 * @param dateTime
+		 * @return
+		 */
+		public static ModelUpdate updateCreationDate(SpdxDocument document, ZonedDateTime dateTime) {
+			return updateCreationDate(document.getDocumentNamespace(), document.getSpdxId(), dateTime);
+		}
+
+		/**
+		 * Updates the document's creation date.
+		 * 
+		 * @param documentBaseUrl
+		 * @param documentSpdxId
+		 * @param dateTime
+		 * @return
+		 */
+		public static ModelUpdate updateCreationDate(String documentBaseUrl, String documentSpdxId,
+				ZonedDateTime dateTime) {
+			ZonedDateTime utcTime = dateTime.withZoneSameInstant(ZoneId.of("UTC"));
+			String newTimeToWrite = utcTime.format(Constants.SPDX_DATE_FORMATTER);
+			return (model) -> {
+				Resource document = getDocumentResource(model, documentBaseUrl, documentSpdxId);
+				Resource creationInfo = document.getPropertyResourceValue(SpdxProperties.CREATION_INFO);
+				Statement s = creationInfo.getProperty(SpdxProperties.CREATION_DATE);
+				s.changeObject(newTimeToWrite);
+			};
+
 		}
 
 	}
@@ -112,7 +160,8 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText) {
-			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT, copyrightText.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT,
+					copyrightText.getLiteralOrUriValue());
 		}
 
 		/**
@@ -134,7 +183,8 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate declaredLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false, (m) -> license.getRdfNode());
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
+					(m) -> license.getRdfNode());
 		}
 
 		/**
@@ -156,7 +206,8 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate concludedLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false, (m) -> license.getRdfNode());
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false,
+					(m) -> license.getRdfNode());
 		}
 
 	}
@@ -249,8 +300,8 @@ public final class Write {
 
 	}
 
-	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target, final Optional<String> comment,
-			final Relationship.Type type) {
+	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target,
+			final Optional<String> comment, final Relationship.Type type) {
 		return addRelationship(source.getUri(), target.getUri(), comment, type);
 	}
 

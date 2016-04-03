@@ -16,6 +16,8 @@ public final class SpdxProperties {
 	public static final Property DATA_LICENSE = new PropertyImpl(SpdxUris.SPDX_TERMS, "dataLicense");
 	public static final Property CREATION_INFO = new PropertyImpl(SpdxUris.SPDX_TERMS, "creationInfo");
 	public static final Property CREATOR = new PropertyImpl(SpdxUris.SPDX_TERMS, "creator");
+	public static final Property CREATION_DATE = new PropertyImpl(SpdxUris.SPDX_TERMS, "created");
+	public static final Property SPEC_VERSION = new PropertyImpl(SpdxUris.SPDX_TERMS, "specVersion");
 
 	// LICENSES
 	public static final Property LICENSE_DECLARED = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseDeclared");

@@ -9,6 +9,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -86,7 +89,7 @@ public class TestModelOperations {
 		SpdxDocument doc = Document.get(dataset);
 		assertEquals("SPDX-2.0", doc.getSpecVersion());
 		assertEquals("SPDX tools", doc.getName());
-		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT", doc.getDocumentNamespace());
+		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1", doc.getDocumentNamespace());
 
 		Iterator<Relationship> related = Read.getRelationships(dataset, doc);
 
@@ -98,23 +101,29 @@ public class TestModelOperations {
 		assertTrue(describesRelationship.getRelatedElement() instanceof SpdxPackage);
 		assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.getRelatedElement().getUri());
 		assertEquals("[DESCRIBES](SpdxPackage)http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1", describesRelationship.toString());
+
+		// Verify the date
+		ZonedDateTime creationTime = doc.getCreationTime();
+		ZonedDateTime expectedCreationTime = ZonedDateTime.of(LocalDateTime.of(2015, 8, 3, 21, 38, 16), ZoneId.of("UTC"));
+		assertEquals(expectedCreationTime, creationTime);
+
+		
 		// Make sure we don't create a new object each time we call
 		// getRelatedElement().
 		assertTrue(describesRelationship.getRelatedElement() == describesRelationship.getRelatedElement());
 
 	}
-	
-	
+
 	@Test
-	public void testElementRetrieval(){
+	public void testElementRetrieval() {
 		Dataset dataset = getDefaultDataSet();
-		Resource docResource = Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT").orElse(null);
+		Resource docResource = Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT")
+				.orElse(null);
 		assertNotNull(docResource);
-		
+
 		Optional<Resource> shouldBeEmpty = Read.lookupResourceByUri(dataset, "foo://No esta aqui");
 		assertEquals(Optional.empty(), shouldBeEmpty);
-		
-		
+
 	}
 
 	@After
