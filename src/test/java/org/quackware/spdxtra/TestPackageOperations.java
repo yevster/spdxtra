@@ -35,6 +35,7 @@ public class TestPackageOperations {
 		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
 		assertEquals("SPDX tools", pkg.getName());
 		assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
+		assertEquals("Expected filesAnalyzed to be true when not specified.", true, pkg.getFilesAnalyzed());
 		List<SpdxFile> files = ImmutableList.copyOf(Package.getFiles(pkg));
 		assertEquals(12, files.size());
 	}
@@ -58,15 +59,16 @@ public class TestPackageOperations {
 		// The package should not have been changed.
 		assertEquals(oldName, pkg.getName());
 		assertEquals(pkg.getUri(), update.getResourceUri());
+		updates.add(Write.Package.filesAnalyzed(pkg.getUri(), false));
 		updates.add(update);
 
 		// Apply the updates
 		Write.applyUpdatesInOneTransaction(dataset, updates);
 
 		// Reload the package from the document model
-		pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).next()
-				.getRelatedElement();
+		pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).next().getRelatedElement();
 		assertEquals(newName, pkg.getName());
+		assertEquals(false,pkg.getFilesAnalyzed());
 	}
 
 	@Test
@@ -78,32 +80,33 @@ public class TestPackageOperations {
 		RdfResourceUpdate update = Write.Package.declaredLicense(pkg,
 				LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
 		assertEquals(SpdxProperties.LICENSE_DECLARED, update.getProperty());
-		
-		//And a concluded license to NOASSERT
+
+		// And a concluded license to NOASSERT
 		RdfResourceUpdate update2 = Write.Package.concludedLicense(pkg, License.NOASSERTION);
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
 
 		pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
-		assertEquals("http://spdx.org/licenses/Apache-2.0", pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
-		assertEquals("http://spdx.org/rdf/terms#noassertion", pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
+		assertEquals("http://spdx.org/licenses/Apache-2.0",
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
+		assertEquals("http://spdx.org/rdf/terms#noassertion",
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
 
 		// Set the declared license to NONE and concluded license to GPL-2.0
 		update = Write.Package.declaredLicense(pkg, License.NONE);
 		update2 = Write.Package.concludedLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("GPL-2.0").get());
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
-		
-		
+
 		// Look closer to the metal. Did we create a duplicate property...
 		Resource pkgResource = Read
 				.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get();
-		//...for declared?
+		// ...for declared?
 		StmtIterator stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_DECLARED);
 		assertTrue("Missing declared license assignment.", stmtIt.hasNext());
 		String licenseUri = stmtIt.next().getObject().asResource().getURI();
 		assertEquals("http://spdx.org/rdf/terms#none", licenseUri);
 		assertTrue("Duplicate declared license assignment.", !stmtIt.hasNext());
-		//...for concluded?
+		// ...for concluded?
 		stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_CONCLUDED);
 		assertTrue("Missing concluded license assignment.", stmtIt.hasNext());
 		licenseUri = stmtIt.next().getObject().asResource().getURI();
@@ -167,6 +170,8 @@ public class TestPackageOperations {
 		assertEquals(packageSpdxId, pkg.getSpdxId());
 		assertEquals(baseUrl + "#" + packageSpdxId, pkg.getUri());
 		assertEquals(copyrightText, pkg.getCopyright().getLiteralOrUriValue());
+		assertEquals(true, pkg.getFilesAnalyzed());// FilesAnalyzed should
+													// default to true.
 		assertNull(pkg.getPropertyAsString(SpdxProperties.LICENSE_CONCLUDED));
 		/*
 		 * Now, let's verify the inverse relationship

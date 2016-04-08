@@ -2,6 +2,7 @@ package org.quackware.spdxtra.model;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.ext.com.google.common.base.MoreObjects;
 import org.apache.jena.rdf.model.Resource;
 import org.quackware.spdxtra.SpdxUris;
@@ -23,6 +24,15 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 	 */
 	public String getName() {
 		return getPropertyAsString(SpdxProperties.SPDX_NAME);
+	}
+	
+	/**
+	 * Returns true if, and only if, the file contents of the package have been analyzed
+	 * in preparing the SPDX document.
+	 */
+	public boolean getFilesAnalyzed(){
+		String filesAnalyzedStr = getPropertyAsString(SpdxProperties.FILES_ANALYZED);
+		return StringUtils.isBlank(filesAnalyzedStr) ? true : Boolean.parseBoolean(filesAnalyzedStr);
 	}
 
 	/**

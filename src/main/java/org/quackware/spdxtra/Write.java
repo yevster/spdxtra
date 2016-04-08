@@ -28,7 +28,6 @@ public final class Write {
 		void apply(Model model);
 	}
 
-
 	public static final class New {
 		/**
 		 * Creates a dataset update that creates a document.
@@ -51,6 +50,9 @@ public final class Write {
 			final String uri = baseUrl + "#" + spdxId;
 			URI.create(uri); // An extra validity check.
 			return (model) -> {
+				// Map the spdx prefix to the namespaces. Otherwise, when
+				// written to RDF, the output will make children cry.
+				model.getGraph().getPrefixMapping().setNsPrefix("spdx", SpdxUris.SPDX_TERMS);
 				Resource type = model.createResource(SpdxUris.SPDX_DOCUMENT);
 				Resource newResource = model.createResource(uri, type);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
@@ -128,7 +130,7 @@ public final class Write {
 			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
 					(m) -> license.getRdfNode());
 		}
-		
+
 		/**
 		 * Generates an RDF update for the package's concluded license
 		 * 
@@ -139,7 +141,7 @@ public final class Write {
 		public static RdfResourceUpdate concludedLicense(SpdxPackage spdxPackage, final License license) {
 			return concludedLicense(spdxPackage.getUri(), license);
 		}
-		
+
 		/**
 		 * Generates an RDF update for the package's concluded license
 		 * 
@@ -152,9 +154,20 @@ public final class Write {
 					(m) -> license.getRdfNode());
 		}
 
+		/**
+		 * Sets the filesAnalyzed property for the package.
+		 * @param packageUri
+		 * @param newValue
+		 * @return
+		 */
+		public static RdfResourceUpdate filesAnalyzed(String packageUri, boolean newValue) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED,
+					Boolean.toString(newValue));
+		}
+
 	}
-	
-	public static final class File{
+
+	public static final class File {
 		/**
 		 * Generates an RDF update for the file's concluded license
 		 * 
@@ -165,7 +178,7 @@ public final class Write {
 		public static RdfResourceUpdate concludedLicense(SpdxFile spdxFile, final License license) {
 			return concludedLicense(spdxFile.getUri(), license);
 		}
-		
+
 		/**
 		 * Generates an RDF update for the file's concluded license
 		 * 
@@ -173,8 +186,8 @@ public final class Write {
 		 * @param license
 		 * @return
 		 */
-		public static RdfResourceUpdate concludedLicense(String fileUri, final License license){
-			//Exactly the same property as in Package, so not duplicating.
+		public static RdfResourceUpdate concludedLicense(String fileUri, final License license) {
+			// Exactly the same property as in Package, so not duplicating.
 			return Write.Package.concludedLicense(fileUri, license);
 		}
 	}
