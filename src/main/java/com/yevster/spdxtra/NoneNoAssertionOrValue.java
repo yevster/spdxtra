@@ -35,9 +35,24 @@ public class NoneNoAssertionOrValue {
 		return new NoneNoAssertionOrValue(value);
 	}
 
-	private NoneNoAssertionOrValue(String value) {
-		this.value = Optional.of(value);
-	}
+    /**
+     * If the argument string corresponds to a URI for NONE or NO_ASSERTION,
+     * returns that value. Otherwise, returns the object with the literal value of the string.
+     *
+     * @param toParse
+     * @return
+     */
+    public static NoneNoAssertionOrValue parse(String toParse) {
+        if (AbsentValue.NOASSERTION.getUri().equals(toParse)) {
+            return NO_ASSERTION;
+        } else if (AbsentValue.NONE.equals(toParse)) {
+            return NONE;
+        } else return NoneNoAssertionOrValue.of(toParse);
+    }
+
+    private NoneNoAssertionOrValue(String value) {
+        this.value = Optional.of(value);
+    }
 
 	private NoneNoAssertionOrValue(AbsentValue value) {
 		this.absentValue = Optional.of(value);

@@ -40,7 +40,7 @@ public abstract class RdfResourceRepresentation {
 		Statement stmt = rdfResource.getProperty(property);
 
 		if (stmt.getObject().isLiteral()) {
-			return NoneNoAssertionOrValue.of(stmt.getObject().asLiteral().getString());
+			return NoneNoAssertionOrValue.parse(stmt.getObject().asLiteral().getString());
 		} else if ((SpdxUris.SPDX_TERMS + "noassertion").equals(stmt.getObject().asResource().getURI()))
 			return NoneNoAssertionOrValue.NO_ASSERTION;
 		else

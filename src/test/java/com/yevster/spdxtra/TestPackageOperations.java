@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +47,8 @@ public class TestPackageOperations {
 		assertEquals("SPDX tools", pkg.getName());
 		assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
 		assertEquals("Expected filesAnalyzed to be true when not specified.", true, pkg.getFilesAnalyzed());
+		assertEquals("spdx-tools.jar", pkg.getPackageFileName().get());
+		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getPackageDownloadLocation());
 
 		List<SpdxFile> files = Package.getFiles(pkg).collect(Collectors.toList());
 		assertEquals(12, files.size());
@@ -73,8 +76,11 @@ public class TestPackageOperations {
 		updates.add(Write.Package.filesAnalyzed(pkg.getUri(), false));
 		updates.add(update);
 
-		// Apply the updates
-		Write.applyUpdatesInOneTransaction(dataset, updates);
+        final String packageDownloadLocation = "git+https://git.myproject.org/MyProject.git@v10.0#src/lib.c";
+        updates.add(Write.Package.packageDownloadLocation(pkg.getUri(), NoneNoAssertionOrValue.of(packageDownloadLocation)));
+
+        // Apply the updates
+        Write.applyUpdatesInOneTransaction(dataset, updates);
 
 		// Reload the package from the document model
 
@@ -83,6 +89,7 @@ public class TestPackageOperations {
 
 		assertEquals(newName, pkg.getName());
 		assertEquals(false, pkg.getFilesAnalyzed());
+		assertEquals(packageDownloadLocation, pkg.getPackageDownloadLocation().getValue().get());
 	}
 
 	@Test
@@ -196,6 +203,13 @@ public class TestPackageOperations {
 		Relationship pkgDescribedByDoc = pkgRelationships.get(0);
 		assertEquals(Relationship.Type.DESCRIBED_BY, pkgDescribedByDoc.getType());
 		assertEquals(doc, pkgDescribedByDoc.getRelatedElement());
+
+		  /*
+        Make sure uninitialized properties stay empty or at default values.
+         */
+		assertEquals(Optional.empty(), pkg.getPackageFileName());
+		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getPackageDownloadLocation());
+
 
 	}
 

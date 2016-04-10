@@ -104,6 +104,7 @@ public final class Write {
 				newPackage.addLiteral(SpdxProperties.SPDX_NAME, packageSpdxName);
 				Write.addRelationship(documentUri, packageUri, Optional.empty(), Type.DESCRIBES).apply(model);
 				Write.addRelationship(packageUri, documentUri, Optional.empty(), Type.DESCRIBED_BY).apply(model);
+				newPackage.addLiteral(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION, NoneNoAssertionOrValue.AbsentValue.NOASSERTION.getUri());
 
 			};
 		}
@@ -147,7 +148,7 @@ public final class Write {
 		 * Generates an RDF update for the package name. Causes no change to any
 		 * data inside pkg.
 		 * 
-		 * @param pkg
+		 * @param uri
 		 * @param newName
 		 * @return
 		 */
@@ -158,7 +159,7 @@ public final class Write {
 		/**
 		 * Geneartes an RDF update for the package's copyright text.
 		 * 
-		 * @param pkg
+		 * @param uri
 		 * @param copyrightText
 		 * @return
 		 */
@@ -224,13 +225,38 @@ public final class Write {
 					Boolean.toString(newValue));
 		}
 
+		/**
+		 * Sets the package's file name attribute.
+		 *
+		 * @param packageUri
+		 * @param fileName   Must not be null, empty, or only whitespace.
+		 * @return
+		 */
+		public static RdfResourceUpdate packageFileName(String packageUri, String fileName) {
+			if (StringUtils.isBlank(fileName)) {
+				throw new IllegalArgumentException("File name must not be blank");
+			}
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_FILE_NAME, fileName);
+		}
+
+		/**
+		 * Sets the package's download location.
+		 *
+		 * @param packageUri
+		 * @param downloadLocation
+		 * @return
+		 */
+		public static RdfResourceUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_DOWNLOAD_LOCATION, downloadLocation.getLiteralOrUriValue());
+		}
+
 	}
 
 	public static final class File {
 		/**
 		 * Generates an RDF update for the file's concluded license
 		 * 
-		 * @param spdxPackage
+		 * @param spdxFile
 		 * @param license
 		 * @return
 		 */
@@ -241,7 +267,7 @@ public final class Write {
 		/**
 		 * Generates an RDF update for the file's concluded license
 		 * 
-		 * @param packageUri
+		 * @param fileUri
 		 * @param license
 		 * @return
 		 */
