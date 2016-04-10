@@ -13,9 +13,9 @@ mainClassName = 'org.quackware.spdxtra.CommandLineTool'
 sourceCompatibility = 1.8
 repositories {
     mavenCentral()
-      flatDir {
-       dirs 'lib'
-   }
+    maven {
+        url  "http://dl.bintray.com/yevster/maven" 
+    }
 }
 
 dependencies {
@@ -23,7 +23,7 @@ dependencies {
     compile 'org.apache.jena:jena-tdb:3.0.1'
     compile 'com.github.jsonld-java:jsonld-java-parent:0.8.2'
     compile 'com.google.guava:guava:19.0'
-	compile name: 'java-rdfa-0.4.3-SNAPSHOT-jar-with-dependencies'
+	compile 'com.yevster.net.rootdev:java-rdfa:0.4.3'
     testCompile "org.mockito:mockito-all:1.10.19"
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
