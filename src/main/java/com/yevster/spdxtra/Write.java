@@ -159,7 +159,7 @@ public final class Write {
     public static final class Package {
 
         /**
-         * Generates an RDF update for the package name. Causes no change to any
+         * Generates an update for the package name. Causes no change to any
          * data inside pkg.
          *
          * @param uri
@@ -171,7 +171,15 @@ public final class Write {
         }
 
         /**
-         * Geneartes an RDF update for the package's copyright text.
+         * Generates an update that sets the package's version
+         */
+        public static RdfResourceUpdate version(String uri, String newVersion){
+        	return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.PACKAGE_VERSION_INFO, newVersion);
+        }
+        
+        
+        /**
+         * Geneartes an update for the package's copyright text.
          *
          * @param uri
          * @param copyrightText
@@ -183,7 +191,7 @@ public final class Write {
         }
 
         /**
-         * Generates an RDF update for the package's declared license
+         * Generates an update for the package's declared license
          *
          * @param spdxPackage
          * @param license
@@ -194,7 +202,7 @@ public final class Write {
         }
 
         /**
-         * Generates an RDF update for the package's declared license
+         * Generates an update for the package's declared license
          *
          * @param packageUri
          * @param license
@@ -206,7 +214,7 @@ public final class Write {
         }
 
         /**
-         * Generates an RDF update for the package's concluded license
+         * Generates an update for the package's concluded license
          *
          * @param spdxPackage
          * @param license
@@ -217,7 +225,7 @@ public final class Write {
         }
 
         /**
-         * Generates an RDF update for the package's concluded license
+         * Generates an update for the package's concluded license
          *
          * @param packageUri
          * @param license
@@ -229,7 +237,7 @@ public final class Write {
         }
 
         /**
-         * Sets the filesAnalyzed property for the package.
+         * Generates an update that sets the filesAnalyzed property for the package.
          *
          * @param packageUri
          * @param newValue
@@ -241,7 +249,7 @@ public final class Write {
         }
 
         /**
-         * Sets the package's file name attribute.
+         * Generates an update that sets the package's file name attribute.
          *
          * @param packageUri
          * @param fileName   Must not be null, empty, or only whitespace.
@@ -267,7 +275,7 @@ public final class Write {
 
 
         /**
-         * Sets the package's homepage
+         * Generates an update that sets the package's homepage
          */
         public static RdfResourceUpdate homepage(String packageUri, NoneNoAssertionOrValue homepage) {
             return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE, homepage.getLiteralOrUriValue());

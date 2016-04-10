@@ -37,206 +37,209 @@ import org.junit.Test;
 
 public class TestPackageOperations {
 
-    @Test
-    public void testPackageRead() throws IOException {
-        Dataset dataset = TestModelOperations.getDefaultDataSet();
-        Stream<SpdxPackage> packages = Read.getAllPackages(dataset);
-        SpdxPackage pkg = packages.filter((p) -> "SPDXRef-1".equals(p.getSpdxId())).findFirst().get();
+	@Test
+	public void testPackageRead() throws IOException {
+		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		Stream<SpdxPackage> packages = Read.getAllPackages(dataset);
+		SpdxPackage pkg = packages.filter((p) -> "SPDXRef-1".equals(p.getSpdxId())).findFirst().get();
 
-        assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
-        assertEquals("SPDX tools", pkg.getName());
-        assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
-        assertEquals("Expected filesAnalyzed to be true when not specified.", true, pkg.getFilesAnalyzed());
-        assertEquals("spdx-tools.jar", pkg.getPackageFileName().get());
-        assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getPackageDownloadLocation());
+		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
+		assertEquals("SPDX tools", pkg.getName());
+		assertEquals("2.0.0-RC1", pkg.getVersionInfo().orElse("NO VERSION? AWWWWWW..."));
+		assertEquals("Expected filesAnalyzed to be true when not specified.", true, pkg.getFilesAnalyzed());
+		assertEquals("spdx-tools.jar", pkg.getPackageFileName().get());
+		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getPackageDownloadLocation());
 
-        List<SpdxFile> files = Package.getFiles(pkg).collect(Collectors.toList());
-        assertEquals(12, files.size());
-    }
+		List<SpdxFile> files = Package.getFiles(pkg).collect(Collectors.toList());
+		assertEquals(12, files.size());
+	}
 
-    @Test
-    public void testPackageFieldUpdates() {
-        Dataset dataset = TestModelOperations.getDefaultDataSet();
-        SpdxDocument doc = Document.get(dataset);
-        List<Relationship> relationships = Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES)
-                .collect(Collectors.toList());
-        assertEquals(1, relationships.size());
-        assertEquals(SpdxPackage.class, relationships.get(0).getRelatedElement().getClass());
-        SpdxPackage pkg = (SpdxPackage) relationships.get(0).getRelatedElement();
+	@Test
+	public void testPackageFieldUpdates() {
+		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		SpdxDocument doc = Document.get(dataset);
+		List<Relationship> relationships = Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES)
+				.collect(Collectors.toList());
+		assertEquals(1, relationships.size());
+		assertEquals(SpdxPackage.class, relationships.get(0).getRelatedElement().getClass());
+		SpdxPackage pkg = (SpdxPackage) relationships.get(0).getRelatedElement();
 
-        List<RdfResourceUpdate> updates = new LinkedList<>();
-        // Let's update the name
-        final String newName = "Definitely not the old name";
-        final String oldName = pkg.getName();
-        assertEquals("SPDX tools", oldName);
-        RdfResourceUpdate update = Write.Package.name(pkg.getUri(), newName);
-        // The package should not have been changed.
-        assertEquals(oldName, pkg.getName());
-        assertEquals(pkg.getUri(), update.getResourceUri());
-        updates.add(Write.Package.filesAnalyzed(pkg.getUri(), false));
-        updates.add(update);
+		List<RdfResourceUpdate> updates = new LinkedList<>();
+		// Let's update the name
+		final String newName = "Definitely not the old name";
+		final String oldName = pkg.getName();
+		assertEquals("SPDX tools", oldName);
+		RdfResourceUpdate update = Write.Package.name(pkg.getUri(), newName);
+		// The package should not have been changed.
+		assertEquals(oldName, pkg.getName());
+		assertEquals(pkg.getUri(), update.getResourceUri());
+		updates.add(Write.Package.filesAnalyzed(pkg.getUri(), false));
+		updates.add(update);
 
-        //Any other updates to add before we apply them all?
-        final String packageDownloadLocation = "git+https://git.myproject.org/MyProject.git@v10.0#src/lib.c";
-        updates.add(Write.Package.packageDownloadLocation(pkg.getUri(), NoneNoAssertionOrValue.of(packageDownloadLocation)));
+		// Any other updates to add before we apply them all?
+		final String packageDownloadLocation = "git+https://git.myproject.org/MyProject.git@v10.0#src/lib.c";
+		updates.add(Write.Package.packageDownloadLocation(pkg.getUri(),
+				NoneNoAssertionOrValue.of(packageDownloadLocation)));
 
-        final String packageHomePage = "http://www.example.org/packageOfDoom";
-        updates.add(Write.Package.homepage(pkg.getUri(), NoneNoAssertionOrValue.of(packageHomePage)));
+		final String version = "6.6.6-alpha-1";
+		updates.add(Write.Package.version(pkg.getUri(), version));
 
-        // Apply the updates
-        Write.applyUpdatesInOneTransaction(dataset, updates);
+		final String packageHomePage = "http://www.example.org/packageOfDoom";
+		updates.add(Write.Package.homepage(pkg.getUri(), NoneNoAssertionOrValue.of(packageHomePage)));
 
-        // Reload the package from the document model
+		// Apply the updates
+		Write.applyUpdatesInOneTransaction(dataset, updates);
 
-        pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).findFirst().get()
-                .getRelatedElement();
+		// Reload the package from the document model
 
-        assertEquals(newName, pkg.getName());
-        assertEquals(false, pkg.getFilesAnalyzed());
-        assertEquals(packageDownloadLocation, pkg.getPackageDownloadLocation().getValue().orElse("YOU FAIL!"));
-        assertEquals(packageHomePage, pkg.getHomepage().getValue().orElse("YOU FAIL!"));
-    }
+		pkg = (SpdxPackage) Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES).findFirst().get()
+				.getRelatedElement();
 
-    @Test
-    public void testPackageLicenseUpdates() {
-        Dataset dataset = TestModelOperations.getDefaultDataSet();
-        SpdxPackage pkg = new SpdxPackage(
-                Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
-        // Let's set a declared license.
-        RdfResourceUpdate update = Write.Package.declaredLicense(pkg,
-                LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
-        assertEquals(SpdxProperties.LICENSE_DECLARED, update.getProperty());
+		assertEquals(newName, pkg.getName());
+		assertEquals(false, pkg.getFilesAnalyzed());
+		assertEquals(packageDownloadLocation, pkg.getPackageDownloadLocation().getValue().orElse("YOU FAIL!"));
+		assertEquals(packageHomePage, pkg.getHomepage().getValue().orElse("YOU FAIL!"));
+		assertEquals(Optional.of(version), pkg.getVersionInfo());
+	}
 
-        // And a concluded license to NOASSERT
-        RdfResourceUpdate update2 = Write.Package.concludedLicense(pkg, License.NOASSERTION);
-        Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
+	@Test
+	public void testPackageLicenseUpdates() {
+		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		SpdxPackage pkg = new SpdxPackage(
+				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
+		// Let's set a declared license.
+		RdfResourceUpdate update = Write.Package.declaredLicense(pkg,
+				LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
+		assertEquals(SpdxProperties.LICENSE_DECLARED, update.getProperty());
 
-        pkg = new SpdxPackage(
-                Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
-        assertEquals("http://spdx.org/licenses/Apache-2.0",
-                pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
-        assertEquals("http://spdx.org/rdf/terms#noassertion",
-                pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
+		// And a concluded license to NOASSERT
+		RdfResourceUpdate update2 = Write.Package.concludedLicense(pkg, License.NOASSERTION);
+		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
 
-        // Set the declared license to NONE and concluded license to GPL-2.0
-        update = Write.Package.declaredLicense(pkg, License.NONE);
-        update2 = Write.Package.concludedLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("GPL-2.0").get());
-        Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
+		pkg = new SpdxPackage(
+				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
+		assertEquals("http://spdx.org/licenses/Apache-2.0",
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
+		assertEquals("http://spdx.org/rdf/terms#noassertion",
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
 
-        // Look closer to the metal. Did we create a duplicate property...
-        Resource pkgResource = Read
-                .lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get();
-        // ...for declared?
-        StmtIterator stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_DECLARED);
-        assertTrue("Missing declared license assignment.", stmtIt.hasNext());
-        String licenseUri = stmtIt.next().getObject().asResource().getURI();
-        assertEquals("http://spdx.org/rdf/terms#none", licenseUri);
-        assertTrue("Duplicate declared license assignment.", !stmtIt.hasNext());
-        // ...for concluded?
-        stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_CONCLUDED);
-        assertTrue("Missing concluded license assignment.", stmtIt.hasNext());
-        licenseUri = stmtIt.next().getObject().asResource().getURI();
-        assertEquals("http://spdx.org/licenses/GPL-2.0", licenseUri);
-        assertTrue("Duplicate concluded license assignment.", !stmtIt.hasNext());
-    }
+		// Set the declared license to NONE and concluded license to GPL-2.0
+		update = Write.Package.declaredLicense(pkg, License.NONE);
+		update2 = Write.Package.concludedLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("GPL-2.0").get());
+		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
 
-    @Test
-    public void testDefaultFieldValues() {
-        Dataset dataset = DatasetFactory.createTxnMem();
-        final String baseUrl = "http://example.com";
-        final String documentSpdxId = "SPDXRef-MyDoc";
-        final String packageSpdxId = "SPDXRef-MyBundleOfJoy";
-        final String packageName = "BundleOfJoy";
+		// Look closer to the metal. Did we create a duplicate property...
+		Resource pkgResource = Read
+				.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get();
+		// ...for declared?
+		StmtIterator stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_DECLARED);
+		assertTrue("Missing declared license assignment.", stmtIt.hasNext());
+		String licenseUri = stmtIt.next().getObject().asResource().getURI();
+		assertEquals("http://spdx.org/rdf/terms#none", licenseUri);
+		assertTrue("Duplicate declared license assignment.", !stmtIt.hasNext());
+		// ...for concluded?
+		stmtIt = pkgResource.listProperties(SpdxProperties.LICENSE_CONCLUDED);
+		assertTrue("Missing concluded license assignment.", stmtIt.hasNext());
+		licenseUri = stmtIt.next().getObject().asResource().getURI();
+		assertEquals("http://spdx.org/licenses/GPL-2.0", licenseUri);
+		assertTrue("Duplicate concluded license assignment.", !stmtIt.hasNext());
+	}
 
-        List<ModelUpdate> updates = new LinkedList<>();
-        updates.add(Write.New.document(baseUrl, documentSpdxId, "El documento fantastico!",
-                Creator.tool("Testy McTestface")));
-        updates.add(Write.Document.addPackage(baseUrl, documentSpdxId, packageSpdxId, packageName));
-        Write.applyUpdatesInOneTransaction(dataset, updates);
+	@Test
+	public void testDefaultFieldValues() {
+		Dataset dataset = DatasetFactory.createTxnMem();
+		final String baseUrl = "http://example.com";
+		final String documentSpdxId = "SPDXRef-MyDoc";
+		final String packageSpdxId = "SPDXRef-MyBundleOfJoy";
+		final String packageName = "BundleOfJoy";
 
-        SpdxPackage pkg = new SpdxPackage(Read.lookupResourceByUri(dataset, baseUrl + "#" + packageSpdxId).get());
+		List<ModelUpdate> updates = new LinkedList<>();
+		updates.add(Write.New.document(baseUrl, documentSpdxId, "El documento fantastico!",
+				Creator.tool("Testy McTestface")));
+		updates.add(Write.Document.addPackage(baseUrl, documentSpdxId, packageSpdxId, packageName));
+		Write.applyUpdatesInOneTransaction(dataset, updates);
 
-        //TESTING STARTS HERE
-        assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
-        assertEquals(Optional.empty(), pkg.getPackageFileName());
-        assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getPackageDownloadLocation());
-        assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getHomepage());
-        assertEquals("New package should have no relationships", 0, Read.getRelationships(dataset, pkg).count());
+		SpdxPackage pkg = new SpdxPackage(Read.lookupResourceByUri(dataset, baseUrl + "#" + packageSpdxId).get());
 
+		// TESTING STARTS HERE
+		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getCopyright());
+		assertEquals(Optional.empty(), pkg.getPackageFileName());
+		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getPackageDownloadLocation());
+		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getHomepage());
+		assertEquals("New package should have no relationships", 0, Read.getRelationships(dataset, pkg).count());
+		assertEquals("A package should not have a version by default.", Optional.empty(), pkg.getVersionInfo());
 
-    }
+	}
 
-    @Test
-    public void testPkgFromScratch1Transaction() {
-        testPackageFromScratch(false);
-    }
+	@Test
+	public void testPkgFromScratch1Transaction() {
+		testPackageFromScratch(false);
+	}
 
-    @Test
-    public void testPkgFromScratchMultipleTransactions() {
-        testPackageFromScratch(true);
-    }
+	@Test
+	public void testPkgFromScratchMultipleTransactions() {
+		testPackageFromScratch(true);
+	}
 
+	public void testPackageFromScratch(boolean separateTransactions) {
+		Dataset dataset = DatasetFactory.createTxnMem();
+		final String baseUrl = "http://example.com";
+		final String documentSpdxId = "SPDXRef-MyDoc";
+		final String packageSpdxId = "SPDXRef-MyBundleOfJoy";
+		final String packageName = "BundleOfJoy";
+		final String copyrightText = "Copyright(c) 2016 Joyco, Inc.\nAll rights reserved.\nSo don'tcha be messin'";
 
-    public void testPackageFromScratch(boolean separateTransactions) {
-        Dataset dataset = DatasetFactory.createTxnMem();
-        final String baseUrl = "http://example.com";
-        final String documentSpdxId = "SPDXRef-MyDoc";
-        final String packageSpdxId = "SPDXRef-MyBundleOfJoy";
-        final String packageName = "BundleOfJoy";
-        final String copyrightText = "Copyright(c) 2016 Joyco, Inc.\nAll rights reserved.\nSo don'tcha be messin'";
+		List<ModelUpdate> updates = new LinkedList<>();
+		updates.add(Write.New.document(baseUrl, documentSpdxId, "El documento fantastico!",
+				Creator.tool("Testy McTestface")));
 
-        List<ModelUpdate> updates = new LinkedList<>();
-        updates.add(Write.New.document(baseUrl, documentSpdxId, "El documento fantastico!",
-                Creator.tool("Testy McTestface")));
+		if (separateTransactions) {
+			Write.applyUpdatesInOneTransaction(dataset, updates);
+			updates.clear();
+		}
 
-        if (separateTransactions) {
-            Write.applyUpdatesInOneTransaction(dataset, updates);
-            updates.clear();
-        }
+		updates.add(Write.Document.addDescribedPackage(baseUrl, documentSpdxId, packageSpdxId, packageName));
+		if (separateTransactions) {
+			Write.applyUpdatesInOneTransaction(dataset, updates);
+			updates.clear();
+		}
 
-        updates.add(Write.Document.addDescribedPackage(baseUrl, documentSpdxId, packageSpdxId, packageName));
-        if (separateTransactions) {
-            Write.applyUpdatesInOneTransaction(dataset, updates);
-            updates.clear();
-        }
-
-        updates.add(
-                Write.Package.copyrightText(baseUrl + "#" + packageSpdxId, NoneNoAssertionOrValue.of(copyrightText)));
-        Write.applyUpdatesInOneTransaction(dataset, updates);
-
-		/*
-         * Now let's make sure the relationship got properly created!
-		 */
-        SpdxDocument doc = new SpdxDocument(Read.lookupResourceByUri(dataset, baseUrl + "#" + documentSpdxId).get());
-        assertNotNull(doc);
-        List<Relationship> relationships = Read.getRelationships(dataset, doc).collect(Collectors.toList());
-        assertEquals(1, relationships.size());
-
-        Relationship docDescribesPackage = relationships.get(0);
-        assertEquals(Relationship.Type.DESCRIBES, docDescribesPackage.getType());
-        assertTrue(docDescribesPackage.getRelatedElement() instanceof SpdxPackage);
+		updates.add(
+				Write.Package.copyrightText(baseUrl + "#" + packageSpdxId, NoneNoAssertionOrValue.of(copyrightText)));
+		Write.applyUpdatesInOneTransaction(dataset, updates);
 
 		/*
-         * Now, let's verify the package
+		 * Now let's make sure the relationship got properly created!
 		 */
-        SpdxPackage pkg = (SpdxPackage) docDescribesPackage.getRelatedElement();
-        assertEquals(packageName, pkg.getName());
-        assertEquals(packageSpdxId, pkg.getSpdxId());
-        assertEquals(baseUrl + "#" + packageSpdxId, pkg.getUri());
-        assertEquals(copyrightText, pkg.getCopyright().getLiteralOrUriValue());
-        assertEquals(true, pkg.getFilesAnalyzed());// FilesAnalyzed should
-        // default to true.
-        assertNull(pkg.getPropertyAsString(SpdxProperties.LICENSE_CONCLUDED));
-        /*
-         * Now, let's verify the inverse relationship
+		SpdxDocument doc = new SpdxDocument(Read.lookupResourceByUri(dataset, baseUrl + "#" + documentSpdxId).get());
+		assertNotNull(doc);
+		List<Relationship> relationships = Read.getRelationships(dataset, doc).collect(Collectors.toList());
+		assertEquals(1, relationships.size());
+
+		Relationship docDescribesPackage = relationships.get(0);
+		assertEquals(Relationship.Type.DESCRIBES, docDescribesPackage.getType());
+		assertTrue(docDescribesPackage.getRelatedElement() instanceof SpdxPackage);
+
+		/*
+		 * Now, let's verify the package
 		 */
-        List<Relationship> pkgRelationships = Read.getRelationships(dataset, pkg).collect(Collectors.toList());
-        assertEquals(1, pkgRelationships.size());
-        Relationship pkgDescribedByDoc = pkgRelationships.get(0);
-        assertEquals(Relationship.Type.DESCRIBED_BY, pkgDescribedByDoc.getType());
-        assertEquals(doc, pkgDescribedByDoc.getRelatedElement());
+		SpdxPackage pkg = (SpdxPackage) docDescribesPackage.getRelatedElement();
+		assertEquals(packageName, pkg.getName());
+		assertEquals(packageSpdxId, pkg.getSpdxId());
+		assertEquals(baseUrl + "#" + packageSpdxId, pkg.getUri());
+		assertEquals(copyrightText, pkg.getCopyright().getLiteralOrUriValue());
+		assertEquals(true, pkg.getFilesAnalyzed());// FilesAnalyzed should
+		// default to true.
+		assertNull(pkg.getPropertyAsString(SpdxProperties.LICENSE_CONCLUDED));
+		/*
+		 * Now, let's verify the inverse relationship
+		 */
+		List<Relationship> pkgRelationships = Read.getRelationships(dataset, pkg).collect(Collectors.toList());
+		assertEquals(1, pkgRelationships.size());
+		Relationship pkgDescribedByDoc = pkgRelationships.get(0);
+		assertEquals(Relationship.Type.DESCRIBED_BY, pkgDescribedByDoc.getType());
+		assertEquals(doc, pkgDescribedByDoc.getRelatedElement());
 
-
-    }
+	}
 
 }
