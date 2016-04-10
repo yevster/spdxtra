@@ -26,6 +26,7 @@ public final class SpdxProperties {
     public static final Property PACKAGE_DOWNLOAD_LOCATION = new PropertyImpl(SpdxUris.SPDX_TERMS, "downloadLocation");
     public static final Property PACKAGE_FILE_NAME = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageFileName");
     public static final Property FILES_ANALYZED = new PropertyImpl(SpdxUris.SPDX_TERMS, "filesAnalyzed");
+	public static final Property HOMEPAGE= new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "homepage");
 
 
     // LICENSES

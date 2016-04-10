@@ -6,6 +6,7 @@ import com.yevster.spdxtra.SpdxProperties;
 import com.yevster.spdxtra.SpdxUris;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 import java.util.Optional;
 
@@ -69,12 +70,15 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
      */
     public NoneNoAssertionOrValue getPackageDownloadLocation() {
         return getPropertyAsNoneNoAssertionOrValue(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION);
-
     }
 
     /**
-     * Returns the version of this package, if one is specified.
+     * Returns the homepage of this package, if one is available.
+     * This is an optional element. If omitted, NOASSERTION will be returned.
      */
+    public NoneNoAssertionOrValue getHomepage() {
+        return getPropertyAsNoneNoAssertionOrValue(SpdxProperties.HOMEPAGE);
+    }
 
     @Override
     public String toString() {
