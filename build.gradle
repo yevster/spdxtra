@@ -31,7 +31,7 @@ dependencies {
 
 jar {
     manifest {       
-        attributes("Implementation-Title": "SpdXtra", "Implementation-Version": "0.1", 'Main-Class': 'org.quackware.spdxtra.cli.CommandLineTool')
+        attributes("Implementation-Title": "$rootProject.name", "Implementation-Version": "$version", 'Main-Class': 'org.quackware.spdxtra.cli.CommandLineTool')
     }
 	baseName="spdxtra"
 }
