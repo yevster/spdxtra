@@ -32,4 +32,5 @@ public final class SpdxProperties {
     // LICENSES
     public static final Property LICENSE_DECLARED = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseDeclared");
     public static final Property LICENSE_CONCLUDED = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseConcluded");
+	public static final Property LICENSE_MEMBER = new PropertyImpl(SpdxUris.SPDX_TERMS, "member");
 }

@@ -69,7 +69,7 @@ public class TestDocumentOperations {
 
 	@Test
 	public void testModifyCreationDate() {
-		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		SpdxDocument document = Read.Document.get(dataset);
 		ZonedDateTime newCreationDate = ZonedDateTime.of(1976, 7, 4, 9, 1, 2, 3, ZoneId.of("America/New_York"));
 		// Expect the date to be stored in UTC, without nanoseconds.

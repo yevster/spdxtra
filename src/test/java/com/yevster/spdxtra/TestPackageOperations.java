@@ -23,11 +23,11 @@ import com.yevster.spdxtra.Read.Document;
 import com.yevster.spdxtra.Read.Package;
 import com.yevster.spdxtra.Write.ModelUpdate;
 import com.yevster.spdxtra.model.Creator;
-import com.yevster.spdxtra.model.License;
 import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxDocument;
 import com.yevster.spdxtra.model.SpdxFile;
 import com.yevster.spdxtra.model.SpdxPackage;
+import com.yevster.spdxtra.model.write.License;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -39,7 +39,7 @@ public class TestPackageOperations {
 
 	@Test
 	public void testPackageRead() throws IOException {
-		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		Stream<SpdxPackage> packages = Read.getAllPackages(dataset);
 		SpdxPackage pkg = packages.filter((p) -> "SPDXRef-1".equals(p.getSpdxId())).findFirst().get();
 
@@ -56,7 +56,7 @@ public class TestPackageOperations {
 
 	@Test
 	public void testPackageFieldUpdates() {
-		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		SpdxDocument doc = Document.get(dataset);
 		List<Relationship> relationships = Read.getRelationships(dataset, doc, Relationship.Type.DESCRIBES)
 				.collect(Collectors.toList());
@@ -104,7 +104,7 @@ public class TestPackageOperations {
 
 	@Test
 	public void testPackageLicenseUpdates() {
-		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		SpdxPackage pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 		// Let's set a declared license.

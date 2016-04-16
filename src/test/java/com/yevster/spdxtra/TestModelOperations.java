@@ -5,10 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -23,7 +20,6 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.tdb.TDBFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import com.yevster.spdxtra.DatasetAutoAbortTransaction;
 import com.yevster.spdxtra.Read;
-import com.yevster.spdxtra.Write;
 import com.yevster.spdxtra.Read.Document;
 import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxDocument;
@@ -48,23 +43,9 @@ public class TestModelOperations {
 		tmpToCleanUp = new LinkedList<>();
 	}
 
-	public static Dataset getDefaultDataSet() {
-		try {
-			Path spdxPath = Paths.get(
-					TestModelOperations.class.getClassLoader().getResource("spdx-tools-2.0.0-RC1.spdx.rdf").toURI());
-			Dataset memoryDataset = TDBFactory.createDataset();
-			assertTrue(Files.exists(spdxPath));
-			Write.rdfIntoDataset(spdxPath, memoryDataset);
-			return memoryDataset;
-		} catch (URISyntaxException e) {
-			throw new RuntimeException("Illegal SPDX input path", e);
-		}
-
-	}
-
 	@Test
 	public void testNewDataset() throws IOException {
-		Dataset dataset = getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		final Model model;
 		try (DatasetAutoAbortTransaction t = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
 			model = dataset.getDefaultModel();
@@ -76,7 +57,7 @@ public class TestModelOperations {
 
 	@Test
 	public void testJsonLd() throws IOException {
-		Dataset dataset = getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		String jsonLd = Read.outputJsonLd(dataset);
 		assertTrue(StringUtils.isNotBlank(jsonLd));
 		// Weak, but temporary (is it ever?)
@@ -86,7 +67,7 @@ public class TestModelOperations {
 
 	@Test
 	public void testSpdxDocumentInfoAndRelationships() {
-		Dataset dataset = getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		SpdxDocument doc = Document.get(dataset);
 		assertEquals("SPDX-2.0", doc.getSpecVersion());
 		assertEquals("SPDX tools", doc.getName());
@@ -119,7 +100,7 @@ public class TestModelOperations {
 
 	@Test
 	public void testElementRetrieval() {
-		Dataset dataset = getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		Resource docResource = Read
 				.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-DOCUMENT")
 				.orElse(null);

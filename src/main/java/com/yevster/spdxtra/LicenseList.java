@@ -18,7 +18,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 
-import com.yevster.spdxtra.model.License;
+import com.yevster.spdxtra.model.write.License;
 
 import net.rootdev.javardfa.jena.RDFaReader.HTMLRDFaReader;
 
@@ -70,13 +70,13 @@ public enum LicenseList {
 			return osiApproved;
 		}
 
-		public RDFNode getRdfNode() {
+		public RDFNode getRdfNode(Model m) {
 			return rdfNode;
 		}
 	}
 
 	public static class LicenseRetrievalException extends RuntimeException {
-		
+
 		public LicenseRetrievalException(String s, Throwable cause) {
 			super(s, cause);
 		}
@@ -140,6 +140,5 @@ public enum LicenseList {
 		}
 
 	}
-
 
 }

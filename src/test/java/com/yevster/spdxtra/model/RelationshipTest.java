@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.yevster.spdxtra.RdfResourceUpdate;
 import com.yevster.spdxtra.Read;
-import com.yevster.spdxtra.TestModelOperations;
+import com.yevster.spdxtra.TestUtils;
 import com.yevster.spdxtra.Write;
 import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxFile;
@@ -53,7 +53,7 @@ public class RelationshipTest {
 
 	@Test
 	public void testAddRelationship() {
-		Dataset dataset = TestModelOperations.getDefaultDataSet();
+		Dataset dataset = TestUtils.getDefaultDataSet();
 		SpdxPackage pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 

@@ -1,5 +1,6 @@
-package com.yevster.spdxtra.model;
+package com.yevster.spdxtra.model.write;
 
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
@@ -20,7 +21,7 @@ public class ExtractedLicense extends License {
 	}
 
 	@Override
-	public RDFNode getRdfNode() {
+	public RDFNode getRdfNode(Model m) {
 		return resource;
 	}
 }
