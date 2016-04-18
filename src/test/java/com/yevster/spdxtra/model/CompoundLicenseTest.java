@@ -92,13 +92,13 @@ public class CompoundLicenseTest {
 		Write.applyUpdatesInOneTransaction(dataset, Write.Package.declaredLicense(pkg, disjunctiveLicense),
 				Write.Package.concludedLicense(pkg, conjunctiveLicense));
 
-		dataset.getDefaultModel().write(System.out);
 	}
 
 	@Test
 	public void testDisjunctiveLicense() {
-
-		License disjunctiveLicense = License.or(LicenseList.INSTANCE.getListedLicenseById("GPL-1.0").get(),
+		String extractedLicenseId = "LicenseRef-AyCaramba";
+		License disjunctiveLicense = License.or(
+				License.extracted("Ay caramba, dios mio! No estoy bien.", documentNamespace, extractedLicenseId),
 				License.NOASSERTION);
 		assertNotNull(disjunctiveLicense);
 
@@ -109,7 +109,7 @@ public class CompoundLicenseTest {
 
 		Stream<Statement> rdfProps = MiscUtils
 				.toLinearStream(licenseResource.listProperties(SpdxProperties.LICENSE_MEMBER));
-		assertEquals(Sets.newHashSet(AbsentValue.NOASSERTION.getUri(), "http://spdx.org/licenses/GPL-1.0"),
+		assertEquals(Sets.newHashSet(AbsentValue.NOASSERTION.getUri(), documentNamespace + "#" + extractedLicenseId),
 				rdfProps.map(Statement::getObject).map(Object::toString).collect(Collectors.toSet()));
 
 	}

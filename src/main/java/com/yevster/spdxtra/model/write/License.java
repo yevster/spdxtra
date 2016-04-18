@@ -64,6 +64,17 @@ public abstract class License {
 	public static License or(License... licenses) {
 		return new CompoundLicense("DisjunctiveLicenseSet", licenses);
 	}
+	
+	/**
+	 * Returns a license with the specified text and the specified ID.
+	 * @param text
+	 * @param baseUrl
+	 * @param spdxId
+	 * @return
+	 */
+	public static License extracted(String text, String baseUrl, String spdxId){
+		return new ExtractedLicense(text, baseUrl, spdxId);
+	}
 
 	public static final License NOASSERTION = new SingleUriLicense(SpdxUris.NO_ASSERTION);
 	public static final License NONE = new SingleUriLicense(SpdxUris.NONE);

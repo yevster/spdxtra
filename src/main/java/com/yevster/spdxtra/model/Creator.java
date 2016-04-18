@@ -11,7 +11,7 @@ public final class Creator {
 	private Supplier<String> toString;
 
 	private Creator(String name, Optional<String> email, Supplier<String> toString) {
-		if (!Validate.creatorName(name)) {
+		if (!Validate.name(name)) {
 			throw new IllegalArgumentException("Inavlid name: " + name);
 		}
 		if (Objects.requireNonNull(email).isPresent() && !Validate.email(email.get())) {

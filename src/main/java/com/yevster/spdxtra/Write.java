@@ -47,7 +47,7 @@ public final class Write {
 		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator,
 				Creator... additionalCreators) {
 			// validation
-			if (StringUtils.isBlank(baseUrl) || StringUtils.containsAny(baseUrl, '#')) {
+			if (!Validate.baseUrl(baseUrl)) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
 			}
 			if (!Validate.spdxId(spdxId)) {
