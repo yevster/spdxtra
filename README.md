@@ -1,5 +1,3 @@
-# spdxtra
-A new Java-based SPDX generation, analysis, and conversion framework.
 ![SpdXtra](http://s1.postimg.org/y28xxq473/image_2.jpg)
 
 ##Project Description
