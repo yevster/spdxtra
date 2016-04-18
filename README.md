@@ -22,7 +22,6 @@ At its core, SpdXtra is a library static (as in "completely stateless") SPDX-spe
 
 ##Limitations (important!)
 
-SpdXtra is not threadsafe.
 The TDB datastore used by SpdXtra may not be used concurrently by multiple processes.
 
 ##License
