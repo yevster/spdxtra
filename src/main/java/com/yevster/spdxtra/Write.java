@@ -356,6 +356,7 @@ public final class Write {
 
 		Dataset dataset = TDBFactory.createDataset(newDatasetPath.toString());
 		dataset.getDefaultModel().getGraph().getPrefixMapping().setNsPrefix("spdx", SpdxUris.SPDX_TERMS);
+		dataset.getDefaultModel().getGraph().getPrefixMapping().setNsPrefix("doap", SpdxUris.DOAP_NAMESPACE);
 		Write.rdfIntoDataset(inputFilePath, dataset);
 		return dataset;
 	}
