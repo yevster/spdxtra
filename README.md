@@ -6,7 +6,7 @@ SPDX is a standard, championed by The Linux Foundation, for describing the conte
 
 SpdXtra is a Java API for building and analyzing SPDX for large codebases. Unlike SPDXtools, the document model is not built or kept in memory.
 
-At present, the API is sufficient to create minimal SPDX 2.1 documents, but is far from feature complete. For example(s) of what is currently possible with the API, a demo/tutorial is available here.
+At present, the API is sufficient to create minimal SPDX 2.1 documents, but is far from feature complete. For example(s) of what is currently possible with the API, a demo/tutorial is available [here](https://bitbucket.org/yevster/spdxtraxample).
 
 In addition, the command line tool can be used to convert SPDX from RDF form to JSON-LD - if that's your desire. Once the minimal document, package, and file properties mandated by the SPDX 2.0 specification are implemented, the first release will be made.
 
