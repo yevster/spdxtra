@@ -50,8 +50,8 @@ public class TestPackageOperations {
 		assertEquals("spdx-tools.jar", pkg.getPackageFileName().get());
 		assertEquals(NoneNoAssertionOrValue.NO_ASSERTION, pkg.getPackageDownloadLocation());
 
-		List<SpdxFile> files = Package.getFiles(pkg).collect(Collectors.toList());
-		assertEquals(12, files.size());
+		List<SpdxFile> files = pkg.getFiles().collect(Collectors.toList());
+		assertEquals(578, files.size());
 	}
 
 	@Test
@@ -119,9 +119,9 @@ public class TestPackageOperations {
 		pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 		assertEquals("http://spdx.org/licenses/Apache-2.0",
-				pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).getURI());
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_DECLARED).get().getURI());
 		assertEquals("http://spdx.org/rdf/terms#noassertion",
-				pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).getURI());
+				pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).get().getURI());
 
 		// Set the declared license to NONE and concluded license to GPL-2.0
 		update = Write.Package.declaredLicense(pkg, License.NONE);

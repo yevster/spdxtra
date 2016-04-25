@@ -62,8 +62,7 @@ public final class Write {
 				// Map the spdx prefix to the namespaces. Otherwise, when
 				// written to RDF, the output will make children cry.
 				model.getGraph().getPrefixMapping().setNsPrefix("spdx", SpdxUris.SPDX_TERMS);
-				Resource type = model.createResource(SpdxUris.SPDX_DOCUMENT);
-				Resource newResource = model.createResource(uri, type);
+				Resource newResource = model.createResource(uri, SpdxResourceTypes.DOCUMENT_TYPE);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
 				newResource.addProperty(SpdxProperties.DATA_LICENSE,
 						model.createResource("http://spdx.org/licenses/CC0-1.0"));
@@ -193,6 +192,10 @@ public final class Write {
 					copyrightText.getLiteralOrUriValue());
 		}
 
+		public static ModelUpdate addFile(String baseUrl, String pkgSpidxId, String fileSpdxId, String newFileName) {
+			return Write.addNewFileToElement(baseUrl, pkgSpidxId, fileSpdxId, newFileName);
+		}
+
 		/**
 		 * Generates an update for the package's declared license
 		 *
@@ -314,9 +317,9 @@ public final class Write {
 		}
 	}
 
-
 	/**
 	 * Convenience method for applying a small set of updates.
+	 * 
 	 * @param dataset
 	 * @param updates
 	 */
@@ -404,6 +407,42 @@ public final class Write {
 			innerRelationship.addProperty(Relationship.relatedElementProperty, m.getResource(targetUri));
 			return innerRelationship;
 		});
+	}
+
+	/**
+	 * Adds a file to an SPDX element. Duplicate adds not currently handled.
+	 * 
+	 * @param baseUrl
+	 * @param parentSpdxId
+	 * @param newFileSpdxId
+	 * @param newFileName
+	 * @return
+	 */
+	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId,
+			String newFileName) {
+		final String parentUri = baseUrl + '#' + parentSpdxId;
+		final String fileUri = baseUrl + '#' + newFileSpdxId;
+
+		return (Model model) -> {
+			Resource newFileResource = model.createResource(fileUri, SpdxResourceTypes.FILE_TYPE);
+			/*
+			 * There will always be one property (the type). If there are
+			 * others, it means this file isn't new.
+			 */
+			if (newFileResource.listProperties().toSet().size() > 1) {
+				// TODO: Fix, per issue #1.
+				throw new UnsupportedOperationException(
+						"File already exists. Adding existing files is currently unsupported.  " + newFileName);
+			}
+			newFileResource.addProperty(SpdxProperties.FILE_NAME, newFileName);
+			Resource parentResource = model.createResource(parentUri);
+			if (!parentResource.listProperties().hasNext()) { // Parent doesn't
+																// exist.
+				throw new IllegalArgumentException("Cannot add file to non-existing element " + parentUri);
+			}
+			parentResource.addProperty(SpdxProperties.HAS_FILE, newFileResource);
+		};
+
 	}
 
 }

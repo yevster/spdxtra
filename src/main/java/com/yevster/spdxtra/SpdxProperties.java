@@ -11,7 +11,7 @@ public final class SpdxProperties {
 	public static final Property SPDX_RELATIONSHIP = new PropertyImpl(SpdxUris.SPDX_RELATIONSHIP);
 	public static final Property RDF_COMMENT = new PropertyImpl(SpdxUris.RDFS_NAMESPACE, "comment");
 	public static final Property RDF_TYPE = new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-
+	public static final Property RDF_ID = new PropertyImpl(SpdxUris.RDF_NAMESPACE, "ID");
 
 
 	/// DOCUMENT PROPERTIES
@@ -27,6 +27,11 @@ public final class SpdxProperties {
     public static final Property PACKAGE_FILE_NAME = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageFileName");
     public static final Property FILES_ANALYZED = new PropertyImpl(SpdxUris.SPDX_TERMS, "filesAnalyzed");
 	public static final Property HOMEPAGE= new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "homepage");
+	
+	//FILE PROPERTIES
+	public static final Property HAS_FILE = new PropertyImpl(SpdxUris.SPDX_TERMS, "hasFile");
+	public static final Property FILE_NAME = new PropertyImpl(SpdxUris.SPDX_TERMS, "fileName");
+
 
 
     // LICENSES

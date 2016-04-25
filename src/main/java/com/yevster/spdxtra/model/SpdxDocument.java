@@ -53,7 +53,8 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 	 * @return
 	 */
 	public ZonedDateTime getCreationTime() {
-		Resource creationInfo = getPropertyAsResource(SpdxProperties.CREATION_INFO);
+		//All these fields are mandatory.
+		Resource creationInfo = getPropertyAsResource(SpdxProperties.CREATION_INFO).get();
 		String creationDate = creationInfo.getProperty(SpdxProperties.CREATION_DATE).getString();
 		return ZonedDateTime.of(LocalDateTime.parse(creationDate, Constants.SPDX_DATE_FORMATTER), ZoneId.of("UTC"));
 	}

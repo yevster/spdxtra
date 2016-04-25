@@ -82,20 +82,6 @@ public class Read {
 
 	public static class Package {
 
-		/**
-		 * Returns a lazy iteraterable of SpdxFiles.
-		 * 
-		 * @return
-		 */
-		public static Stream<SpdxFile> getFiles(SpdxPackage pkg) {
-
-			Resource hasFileResource = pkg.getPropertyAsResource(SpdxUris.SPDX_TERMS + "hasFile");
-			final StmtIterator it = hasFileResource.listProperties();
-			return StreamSupport.stream(Spliterators.spliteratorUnknownSize(Iterators.transform(it, (s) -> {
-				String uri = s.getSubject().getURI();
-				return new SpdxFile(hasFileResource.getModel().getResource(uri));
-			}), Spliterator.ORDERED | Spliterator.NONNULL), false);
-		}
 
 	}
 

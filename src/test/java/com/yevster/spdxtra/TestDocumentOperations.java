@@ -54,9 +54,9 @@ public class TestDocumentOperations {
 
 		// The data license should have no properties, just the URI;
 		assertEquals("http://spdx.org/licenses/CC0-1.0",
-				document.getPropertyAsResource(SpdxProperties.DATA_LICENSE).getURI());
+				document.getPropertyAsResource(SpdxProperties.DATA_LICENSE).get().getURI());
 		// Verify creation Info
-		Resource creationInfo = document.getPropertyAsResource(SpdxProperties.CREATION_INFO);
+		Resource creationInfo = document.getPropertyAsResource(SpdxProperties.CREATION_INFO).get();
 		assertNotNull(creationInfo);
 		StmtIterator creatorStatements = creationInfo.listProperties(SpdxProperties.CREATOR);
 		Set<String> creatorStrings = stmtIteratorToStringSet(creatorStatements);

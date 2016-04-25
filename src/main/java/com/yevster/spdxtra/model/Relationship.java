@@ -60,7 +60,7 @@ public class Relationship extends RdfResourceRepresentation {
 	}
 
 	public Type getType() {
-		String uri = getPropertyAsResource(relationshipTypeProperty).getURI();
+		String uri = getPropertyAsResource(relationshipTypeProperty).get().getURI();
 		return Type.fromUri(uri);
 	}
 
@@ -72,7 +72,7 @@ public class Relationship extends RdfResourceRepresentation {
 		if (relatedElement.isPresent())
 			return relatedElement.get();
 		else {
-			Resource r = getPropertyAsResource(relatedElementProperty);
+			Resource r = getPropertyAsResource(relatedElementProperty).get();
 			relatedElement = Optional.of(SpdxElementFactory.relationshipTargetFromResource(r));
 			return relatedElement.get();
 		}
