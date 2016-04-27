@@ -31,6 +31,8 @@ public final class SpdxProperties {
 	//FILE PROPERTIES
 	public static final Property HAS_FILE = new PropertyImpl(SpdxUris.SPDX_TERMS, "hasFile");
 	public static final Property FILE_NAME = new PropertyImpl(SpdxUris.SPDX_TERMS, "fileName");
+	public static final Property FILE_TYPE = new PropertyImpl(SpdxUris.SPDX_TERMS, "fileType");
+	
 
 
 

@@ -11,13 +11,15 @@ import org.apache.jena.rdf.model.Statement;
 import com.yevster.spdxtra.Write.ModelUpdate;
 
 /**
- * Represents the most common kind of SPDX model update - where the value of a property is set to a literal or a resource.
- * While instances of this class may be returned by other methods, you should never have to instantiate it. Instead, use the 
- * methods in subclasses of {@link Write} to generate updates.
+ * Represents the most common kind of SPDX model update - where the value of a
+ * property is set to a literal or a resource. While instances of this class may
+ * be returned by other methods, you should never have to instantiate it.
+ * Instead, use the methods in subclasses of {@link Write} to generate updates.
+ * 
  * @author yevster
  *
  */
-public class RdfResourceUpdate implements ModelUpdate{
+public class RdfResourceUpdate implements ModelUpdate {
 	private String resourceUri;
 	private Property property;
 	private UpdateRdfNodeBuilder newValueBuilder;
@@ -36,6 +38,7 @@ public class RdfResourceUpdate implements ModelUpdate{
 		return new RdfResourceUpdate(resourceUri, property, false, updateBuilder);
 	}
 
+	@FunctionalInterface
 	public interface UpdateRdfNodeBuilder {
 		RDFNode newValue(Model model);
 	}
@@ -63,17 +66,21 @@ public class RdfResourceUpdate implements ModelUpdate{
 	 *            can have multiple relationships).
 	 * 
 	 */
-	public RdfResourceUpdate(String resourceUri, Property property, boolean createNewProperty, UpdateRdfNodeBuilder newValueBuilder) {
+	public RdfResourceUpdate(String resourceUri, Property property, boolean createNewProperty,
+			UpdateRdfNodeBuilder newValueBuilder) {
 		this.resourceUri = Objects.requireNonNull(resourceUri);
 		this.property = Objects.requireNonNull(property);
 		this.newValueBuilder = Objects.requireNonNull(newValueBuilder);
 		this.createNewProperty = createNewProperty;
 	}
-	
+
 	@Override
 	public void apply(Model model) {
 		Resource resource = model.getResource(this.getResourceUri());
-		
+		if (!resource.listProperties().hasNext()) {
+			throw new IllegalArgumentException("Resource " + this.getResourceUri() + " does not exist.");
+		}
+
 		if (this.getCreateNewProperty()) {
 			resource.addProperty(this.getProperty(), this.getNewValueBuilder().newValue(model));
 		} else {

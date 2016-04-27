@@ -16,12 +16,14 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 
 import com.google.common.collect.Iterables;
 import com.yevster.spdxtra.model.Creator;
+import com.yevster.spdxtra.model.FileType;
 import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxDocument;
 import com.yevster.spdxtra.model.Relationship.Type;
@@ -300,7 +302,7 @@ public final class Write {
 		 * @param license
 		 * @return
 		 */
-		public static RdfResourceUpdate concludedLicense(SpdxFile spdxFile, final License license) {
+		public static ModelUpdate concludedLicense(SpdxFile spdxFile, final License license) {
 			return concludedLicense(spdxFile.getUri(), license);
 		}
 
@@ -311,9 +313,22 @@ public final class Write {
 		 * @param license
 		 * @return
 		 */
-		public static RdfResourceUpdate concludedLicense(String fileUri, final License license) {
+		public static ModelUpdate concludedLicense(String fileUri, final License license) {
 			// Exactly the same property as in Package, so not duplicating.
 			return Write.Package.concludedLicense(fileUri, license);
+		}
+		
+		/**
+		 * Generates an RDF update for the file's type(s). Overwrites all previous values of this property on this file.
+		 */
+		public static ModelUpdate fileTypes(String fileUri, final FileType... fileTypes){
+			return (Model m)->{
+				Resource file = m.getResource(fileUri);
+				file.removeAll(SpdxProperties.FILE_TYPE);
+				for (FileType fileType : fileTypes){
+					file.addProperty(SpdxProperties.FILE_TYPE, ResourceFactory.createResource(fileType.getUri()));
+				}
+			};
 		}
 	}
 
@@ -434,7 +449,7 @@ public final class Write {
 				throw new UnsupportedOperationException(
 						"File already exists. Adding existing files is currently unsupported.  " + newFileName);
 			}
-			newFileResource.addProperty(SpdxProperties.FILE_NAME, newFileName);
+			newFileResource.addLiteral(SpdxProperties.FILE_NAME, newFileName);
 			Resource parentResource = model.createResource(parentUri);
 			if (!parentResource.listProperties().hasNext()) { // Parent doesn't
 																// exist.
