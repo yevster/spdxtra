@@ -2,6 +2,7 @@ package com.yevster.spdxtra.model;
 
 import com.github.andrewoma.dexx.collection.Sets;
 import com.google.common.base.MoreObjects;
+import com.yevster.spdxtra.NoneNoAssertionOrValue;
 import com.yevster.spdxtra.SpdxProperties;
 import com.yevster.spdxtra.SpdxUris;
 import com.yevster.spdxtra.util.MiscUtils;
@@ -48,6 +49,10 @@ public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 						.map(Checksum::fromResource)
 						.collect(Collectors.toSet());
 		return Collections.unmodifiableSet(result);
+	}
+	
+	public NoneNoAssertionOrValue getCopyrightText(){
+		return NoneNoAssertionOrValue.parse(rdfResource.getProperty(SpdxProperties.COPYRIGHT_TEXT).getString());
 	}
 	
 	@Override

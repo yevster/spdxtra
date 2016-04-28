@@ -319,6 +319,11 @@ public final class Write {
 			return Write.Package.concludedLicense(fileUri, license);
 		}
 		
+		public static ModelUpdate copyrightText(String fileUri, NoneNoAssertionOrValue copyrightText){
+			// Exactly the same property as in Package, so not duplicating.
+			return Write.Package.copyrightText(fileUri, copyrightText);
+		}
+		
 		/**
 		 * Add license info in file
 		 * @param fileUri
@@ -484,6 +489,7 @@ public final class Write {
 						"File already exists. Adding existing files is currently unsupported.  " + newFileName);
 			}
 			newFileResource.addLiteral(SpdxProperties.FILE_NAME, newFileName);
+			newFileResource.addProperty(SpdxProperties.COPYRIGHT_TEXT, NoneNoAssertionOrValue.NO_ASSERTION.getLiteralOrUriValue());
 			Resource parentResource = model.createResource(parentUri);
 			if (!parentResource.listProperties().hasNext()) { // Parent doesn't
 																// exist.
