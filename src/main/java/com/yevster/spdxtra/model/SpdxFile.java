@@ -41,6 +41,15 @@ public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 		return Collections.unmodifiableSet(result);
 	}
 
+	public Set<Checksum> getChecksums(){
+		Set<Checksum> result = 
+				MiscUtils.toLinearStream(this.rdfResource.listProperties(SpdxProperties.CHECKSUM))
+						.map(Statement::getResource)
+						.map(Checksum::fromResource)
+						.collect(Collectors.toSet());
+		return Collections.unmodifiableSet(result);
+	}
+	
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(SpdxPackage.class).add("File name", getFileName()).toString();

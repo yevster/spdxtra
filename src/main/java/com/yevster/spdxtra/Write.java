@@ -22,6 +22,7 @@ import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 
 import com.google.common.collect.Iterables;
+import com.yevster.spdxtra.model.Checksum;
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.FileType;
 import com.yevster.spdxtra.model.Relationship;
@@ -319,14 +320,47 @@ public final class Write {
 		}
 		
 		/**
-		 * Generates an RDF update for the file's type(s). Overwrites all previous values of this property on this file.
+		 * Add license info in file
+		 * @param fileUri
+		 * @param license
+		 * @return
 		 */
-		public static ModelUpdate fileTypes(String fileUri, final FileType... fileTypes){
-			return (Model m)->{
+		public static ModelUpdate licenseInfoInFile(String fileUri, final License license){
+			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false, (Model m)->license.getRdfNode(m));
+		}
+
+		/**
+		 * Generates an RDF update for the file's type(s). Overwrites all
+		 * previous values of this property on this file.
+		 */
+		public static ModelUpdate fileTypes(String fileUri, final FileType... fileTypes) {
+			return (Model m) -> {
 				Resource file = m.getResource(fileUri);
 				file.removeAll(SpdxProperties.FILE_TYPE);
-				for (FileType fileType : fileTypes){
+				for (FileType fileType : fileTypes) {
 					file.addProperty(SpdxProperties.FILE_TYPE, ResourceFactory.createResource(fileType.getUri()));
+				}
+			};
+		}
+
+		/**
+		 * Generates an update for the file's checksum(s). Overwrites all
+		 * previous values of this proeprty.
+		 * 
+		 * @param fileUri
+		 * @param sha1
+		 *            - The SHA 1 digest. Required for all files.
+		 * @param others
+		 *            - Other, optional checksum values.
+		 * @return
+		 */
+		public static ModelUpdate checksums(String fileUri, String sha1, Checksum... others) {
+			return (Model m) -> {
+				Resource file = m.getResource(fileUri);
+				file.removeAll(SpdxProperties.CHECKSUM);	
+				file.addProperty(SpdxProperties.CHECKSUM, Checksum.sha1(sha1).asResource(m));
+				for (Checksum checksum : others){
+					file.addProperty(SpdxProperties.CHECKSUM, checksum.asResource(m));
 				}
 			};
 		}
