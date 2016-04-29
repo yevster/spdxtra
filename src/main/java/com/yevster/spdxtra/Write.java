@@ -433,7 +433,7 @@ public final class Write {
 	}
 
 	public static void applyUpdatesInOneTransaction(Dataset dataset, Iterable<? extends ModelUpdate> updates) {
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE);) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE)) {
 			Model model = dataset.getDefaultModel();
 			for (ModelUpdate update : updates) {
 				update.apply(model);
@@ -488,7 +488,7 @@ public final class Write {
 			throw new RuntimeException("Unable to read file " + inputFilePath.toAbsolutePath().toString(), ioe);
 		}
 
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE);) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.WRITE)) {
 			dataset.getDefaultModel().read(is, null);
 			transaction.commit();
 		}

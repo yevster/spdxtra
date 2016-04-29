@@ -64,7 +64,7 @@ public class Read {
 		 */
 		public static SpdxDocument get(Dataset dataset) {
 			try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset,
-					ReadWrite.READ);) {
+					ReadWrite.READ)) {
 
 				String sparql = Read.createSparqlQueryByType(SpdxDocument.RDF_TYPE);
 				QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
@@ -100,7 +100,7 @@ public class Read {
 		Objects.requireNonNull(outputFilePath);
 		Files.createFile(outputFilePath);
 		try (FileOutputStream fos = new FileOutputStream(outputFilePath.toFile());
-				DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+				DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ)) {
 			WriterGraphRIOT writer = RDFDataMgr.createGraphWriter(RDFFormat.RDFXML_PRETTY);
 			writer.write(fos, dataset.asDatasetGraph().getDefaultGraph(),
 					PrefixMapFactory.create(dataset.getDefaultModel().getNsPrefixMap()), null, dataset.getContext());
@@ -119,7 +119,7 @@ public class Read {
 		Object jsonLdRaw = null;
 		String jsonLdRawString = null;
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);
-				StringWriter out = new StringWriter();) {
+				StringWriter out = new StringWriter()) {
 			logger.debug("Starting raw JSON-LD output");
 			RDFDataMgr.write(out, dataset, Lang.JSONLD);
 			out.flush();
@@ -162,7 +162,7 @@ public class Read {
 
 	public static Stream<SpdxPackage> getAllPackages(Dataset dataset) {
 
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ)) {
 
 			String sparql = createSparqlQueryByType(SpdxUris.SPDX_PACKAGE);
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
@@ -197,7 +197,7 @@ public class Read {
 	}
 
 	private static Stream<Relationship> getRelationshipsWithSparql(Dataset dataset, String sparql) {
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ)) {
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
 			Stream<QuerySolution> solutionStream = StreamSupport.stream(
@@ -220,7 +220,7 @@ public class Read {
 	}
 
 	public static Optional<Resource> lookupResourceByUri(Dataset dataset, String uri) {
-		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ)) {
 			Model model = dataset.getDefaultModel();
 			// Although this would create a new resource if it didn't exist,
 			// we're in a read-only transaction.

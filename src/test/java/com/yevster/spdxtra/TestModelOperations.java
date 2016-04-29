@@ -47,7 +47,7 @@ public class TestModelOperations {
 	public void testNewDataset() throws IOException {
 		Dataset dataset = TestUtils.getDefaultDataSet();
 		final Model model;
-		try (DatasetAutoAbortTransaction t = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ);) {
+		try (DatasetAutoAbortTransaction t = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ)) {
 			model = dataset.getDefaultModel();
 			assertNotNull(model);
 			assertEquals("http://spdx.org/documents/spdx-toolsv2.0-rc1#", model.getNsPrefixURI(""));
