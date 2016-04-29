@@ -45,7 +45,7 @@ public class NoneNoAssertionOrValue {
     public static NoneNoAssertionOrValue parse(String toParse) {
         if (AbsentValue.NOASSERTION.getUri().equals(toParse)) {
             return NO_ASSERTION;
-        } else if (AbsentValue.NONE.equals(toParse)) {
+        } else if (AbsentValue.NONE.getUri().equals(toParse)) {
             return NONE;
         } else return NoneNoAssertionOrValue.of(toParse);
     }
