@@ -37,7 +37,7 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 	 */
 	public boolean getFilesAnalyzed() {
 		String filesAnalyzedStr = getPropertyAsString(SpdxProperties.FILES_ANALYZED);
-		return StringUtils.isBlank(filesAnalyzedStr) ? true : Boolean.parseBoolean(filesAnalyzedStr);
+		return StringUtils.isBlank(filesAnalyzedStr) || Boolean.parseBoolean(filesAnalyzedStr);
 	}
 
 	/**
