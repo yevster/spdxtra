@@ -57,22 +57,25 @@ public abstract class License {
 	}
 
 	/**
-	 * Returns a disjunctive license containing or referecing all the provided licenses.
+	 * Returns a disjunctive license containing or referecing all the provided
+	 * licenses.
+	 * 
 	 * @param licenses
 	 * @return
 	 */
 	public static License or(License... licenses) {
 		return new CompoundLicense("DisjunctiveLicenseSet", licenses);
 	}
-	
+
 	/**
 	 * Returns a license with the specified text and the specified ID.
+	 * 
 	 * @param text
 	 * @param baseUrl
 	 * @param spdxId
 	 * @return
 	 */
-	public static License extracted(String text, String baseUrl, String spdxId){
+	public static License extracted(String text, String baseUrl, String spdxId) {
 		return new ExtractedLicense(text, baseUrl, spdxId);
 	}
 

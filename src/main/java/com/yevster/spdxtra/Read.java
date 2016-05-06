@@ -63,8 +63,7 @@ public class Read {
 		 * @return
 		 */
 		public static SpdxDocument get(Dataset dataset) {
-			try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset,
-					ReadWrite.READ)) {
+			try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ)) {
 
 				String sparql = Read.createSparqlQueryByType(SpdxDocument.RDF_TYPE);
 				QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
@@ -81,7 +80,6 @@ public class Read {
 	}
 
 	public static class Package {
-
 
 	}
 
@@ -167,8 +165,8 @@ public class Read {
 			String sparql = createSparqlQueryByType(SpdxUris.SPDX_PACKAGE);
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
-			Stream<QuerySolution> querySolutionStream = StreamSupport.stream(
-					Spliterators.spliteratorUnknownSize(results, Spliterator.ORDERED | Spliterator.NONNULL), false);
+			Stream<QuerySolution> querySolutionStream = StreamSupport
+					.stream(Spliterators.spliteratorUnknownSize(results, Spliterator.ORDERED | Spliterator.NONNULL), false);
 
 			return querySolutionStream.map((QuerySolution qs) -> {
 				RDFNode subject = qs.get("s");
@@ -200,8 +198,8 @@ public class Read {
 		try (DatasetAutoAbortTransaction transaction = DatasetAutoAbortTransaction.begin(dataset, ReadWrite.READ)) {
 			QueryExecution qe = QueryExecutionFactory.create(sparql, dataset);
 			ResultSet results = qe.execSelect();
-			Stream<QuerySolution> solutionStream = StreamSupport.stream(
-					Spliterators.spliteratorUnknownSize(results, Spliterator.ORDERED | Spliterator.NONNULL), false);
+			Stream<QuerySolution> solutionStream = StreamSupport
+					.stream(Spliterators.spliteratorUnknownSize(results, Spliterator.ORDERED | Spliterator.NONNULL), false);
 
 			return solutionStream.map((QuerySolution qs) -> {
 				RDFNode relationshipNode = qs.get("o");
@@ -212,10 +210,9 @@ public class Read {
 		}
 	}
 
-	public static Stream<Relationship> getRelationships(Dataset dataset, SpdxElement element,
-			Relationship.Type relationshipType) {
-		String sparql = "SELECT ?o  WHERE { <" + element.getUri() + "> <" + SpdxUris.SPDX_RELATIONSHIP + "> ?o.\n"
-				+ "?o <" + SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
+	public static Stream<Relationship> getRelationships(Dataset dataset, SpdxElement element, Relationship.Type relationshipType) {
+		String sparql = "SELECT ?o  WHERE { <" + element.getUri() + "> <" + SpdxUris.SPDX_RELATIONSHIP + "> ?o.\n" + "?o <"
+				+ SpdxUris.SPDX_TERMS + "relationshipType" + "> <" + relationshipType.getUri() + ">. }";
 		return getRelationshipsWithSparql(dataset, sparql);
 	}
 

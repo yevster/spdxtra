@@ -24,25 +24,25 @@ public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 		String resourceType = resource.getProperty(SpdxProperties.RDF_TYPE).getObject().asResource().getURI();
 		if (!StringUtils.equals(resourceType, SpdxUris.SPDX_FILE)) {
 			throw new IllegalArgumentException("Resource " + resource.getURI() + " is not an SPDX file");
-		}	
+		}
 	}
 
 	public String getFileName() {
 		return getPropertyAsString(SpdxUris.SPDX_TERMS + "fileName");
 	}
-	
-	public Set<FileType> getFileTypes(){
+
+	public Set<FileType> getFileTypes() {
 		Set<FileType> result = 
 				MiscUtils.toLinearStream(this.rdfResource.listProperties(SpdxProperties.FILE_TYPE))
 					.map(Statement::getResource)
 					.map(Resource::getURI)
 					.map(FileType::fromUri)
 					.collect(Collectors.toSet());
-					
+
 		return Collections.unmodifiableSet(result);
 	}
 
-	public Set<Checksum> getChecksums(){
+	public Set<Checksum> getChecksums() {
 		Set<Checksum> result = 
 				MiscUtils.toLinearStream(this.rdfResource.listProperties(SpdxProperties.CHECKSUM))
 						.map(Statement::getResource)
@@ -50,11 +50,11 @@ public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 						.collect(Collectors.toSet());
 		return Collections.unmodifiableSet(result);
 	}
-	
-	public NoneNoAssertionOrValue getCopyrightText(){
+
+	public NoneNoAssertionOrValue getCopyrightText() {
 		return NoneNoAssertionOrValue.parse(rdfResource.getProperty(SpdxProperties.COPYRIGHT_TEXT).getString());
 	}
-	
+
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(SpdxPackage.class).add("File name", getFileName()).toString();

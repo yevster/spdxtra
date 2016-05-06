@@ -550,14 +550,15 @@ public final class Write {
 
 	}
 
-	
 	/**
-	 * Returns a comparator by required property. If the property is not present, a NullPointerException is thrown.
+	 * Returns a comparator by required property. If the property is not
+	 * present, a NullPointerException is thrown.
+	 * 
 	 * @param property
 	 * @return
 	 */
-	protected static Comparator<Resource> byRequiredLiteralProperty(Property property){
-		return Ordering.from((Resource r1, Resource r2) ->{
+	protected static Comparator<Resource> byRequiredLiteralProperty(Property property) {
+		return Ordering.from((Resource r1, Resource r2) -> {
 			String s1 = Objects.requireNonNull(r1).getProperty(property).getObject().asLiteral().getString();
 			String s2 = Objects.requireNonNull(r2).getProperty(property).getObject().asLiteral().getString();
 			return Ordering.natural().nullsFirst().compare(s1, s2);

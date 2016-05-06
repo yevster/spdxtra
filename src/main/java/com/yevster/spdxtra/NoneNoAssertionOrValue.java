@@ -5,7 +5,7 @@ import java.util.Optional;
 
 /**
  * This class is designed to store values for SPDX properties where the
- * acceptable values are NONE, NOASSERTION, or some user-defined literal. 
+ * acceptable values are NONE, NOASSERTION, or some user-defined literal.
  * 
  * @author yevster
  *
@@ -35,24 +35,26 @@ public class NoneNoAssertionOrValue {
 		return new NoneNoAssertionOrValue(value);
 	}
 
-    /**
-     * If the argument string corresponds to a URI for NONE or NO_ASSERTION,
-     * returns that value. Otherwise, returns the object with the literal value of the string.
-     *
-     * @param toParse
-     * @return
-     */
-    public static NoneNoAssertionOrValue parse(String toParse) {
-        if (AbsentValue.NOASSERTION.getUri().equals(toParse)) {
-            return NO_ASSERTION;
-        } else if (AbsentValue.NONE.getUri().equals(toParse)) {
-            return NONE;
-        } else return NoneNoAssertionOrValue.of(toParse);
-    }
+	/**
+	 * If the argument string corresponds to a URI for NONE or NO_ASSERTION,
+	 * returns that value. Otherwise, returns the object with the literal value
+	 * of the string.
+	 *
+	 * @param toParse
+	 * @return
+	 */
+	public static NoneNoAssertionOrValue parse(String toParse) {
+		if (AbsentValue.NOASSERTION.getUri().equals(toParse)) {
+			return NO_ASSERTION;
+		} else if (AbsentValue.NONE.getUri().equals(toParse)) {
+			return NONE;
+		} else
+			return NoneNoAssertionOrValue.of(toParse);
+	}
 
-    private NoneNoAssertionOrValue(String value) {
-        this.value = Optional.of(value);
-    }
+	private NoneNoAssertionOrValue(String value) {
+		this.value = Optional.of(value);
+	}
 
 	private NoneNoAssertionOrValue(AbsentValue value) {
 		this.absentValue = Optional.of(value);
@@ -85,7 +87,7 @@ public class NoneNoAssertionOrValue {
 	 * @return
 	 */
 	public String getLiteralOrUriValue() {
-		
+
 		return getValue().isPresent() ? getValue().get() : getAbsentValue().get().getUri();
 	}
 

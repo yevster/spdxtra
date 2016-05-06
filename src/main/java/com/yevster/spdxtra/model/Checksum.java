@@ -31,7 +31,8 @@ public final class Checksum {
 		Resource rdfResource = model.createResource();
 		rdfResource.addProperty(SpdxProperties.RDF_TYPE, SpdxResourceTypes.CHECKSUM_TYPE);
 		rdfResource.addProperty(SpdxProperties.CHECKSUM_VALUE, Objects.requireNonNull(digest));
-		rdfResource.addProperty(SpdxProperties.CHECKSUM_ALGORITHM, ResourceFactory.createResource(Objects.requireNonNull(algorithm).getUri()));
+		rdfResource.addProperty(SpdxProperties.CHECKSUM_ALGORITHM,
+				ResourceFactory.createResource(Objects.requireNonNull(algorithm).getUri()));
 		return rdfResource;
 	}
 
@@ -56,8 +57,7 @@ public final class Checksum {
 	}
 
 	public static Checksum fromResource(Resource rdfResource) {
-		Algorithm algorithm = Algorithm
-				.fromUri(rdfResource.getPropertyResourceValue(SpdxProperties.CHECKSUM_ALGORITHM).getURI());
+		Algorithm algorithm = Algorithm.fromUri(rdfResource.getPropertyResourceValue(SpdxProperties.CHECKSUM_ALGORITHM).getURI());
 		String digest = rdfResource.getProperty(SpdxProperties.CHECKSUM_VALUE).getLiteral().getString();
 		return new Checksum(algorithm, digest);
 	}
@@ -88,8 +88,7 @@ public final class Checksum {
 
 	@Override
 	public boolean equals(Object other) {
-		return other != null && other instanceof Checksum
-				&& Objects.equals(getAlgorithm(), ((Checksum) other).getAlgorithm())
+		return other != null && other instanceof Checksum && Objects.equals(getAlgorithm(), ((Checksum) other).getAlgorithm())
 				&& Objects.equals(getDigest(), ((Checksum) other).getDigest());
 	}
 

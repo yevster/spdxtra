@@ -8,7 +8,7 @@ import java.util.stream.StreamSupport;
 
 public class MiscUtils {
 
-    public static <T> Stream<T> toLinearStream(Iterator<T> iterator) {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED | Spliterator.NONNULL), false);
-    }
+	public static <T> Stream<T> toLinearStream(Iterator<T> iterator) {
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED | Spliterator.NONNULL), false);
+	}
 }

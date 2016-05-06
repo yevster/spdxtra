@@ -18,8 +18,7 @@ import com.yevster.spdxtra.Validate;
  *
  */
 class ExtractedLicense extends License {
-	private static final Resource extractedLicenseType = ResourceFactory
-			.createResource(SpdxUris.SPDX_TERMS + "ExtractedLicensingInfo");
+	private static final Resource extractedLicenseType = ResourceFactory.createResource(SpdxUris.SPDX_TERMS + "ExtractedLicensingInfo");
 
 	private String text;
 
@@ -43,10 +42,10 @@ class ExtractedLicense extends License {
 	@Override
 	public RDFNode getRdfNode(Model m) {
 		String licenseUri = this.baseUrl + '#' + this.spdxId;
-		
+
 		Resource resource = m.createResource(licenseUri, extractedLicenseType);
-		if (resource.listProperties().hasNext()){
-			//Existing resource. Need to remove properties before writing them.
+		if (resource.listProperties().hasNext()) {
+			// Existing resource. Need to remove properties before writing them.
 			resource.removeAll(SpdxProperties.LICENSE_EXTRACTED_TEXT);
 			resource.removeAll(SpdxProperties.LICENSE_ID);
 		}

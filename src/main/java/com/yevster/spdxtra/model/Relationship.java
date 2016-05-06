@@ -80,8 +80,7 @@ public class Relationship extends RdfResourceRepresentation {
 
 	@Override
 	public String toString() {
-		return "[" + getType() + "](" + getRelatedElement().getClass().getSimpleName() + ")"
-				+ getRelatedElement().getUri();
+		return "[" + getType() + "](" + getRelatedElement().getClass().getSimpleName() + ")" + getRelatedElement().getUri();
 	}
 
 }

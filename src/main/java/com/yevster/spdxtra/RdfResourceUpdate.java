@@ -66,8 +66,7 @@ public class RdfResourceUpdate implements ModelUpdate {
 	 *            can have multiple relationships).
 	 * 
 	 */
-	public RdfResourceUpdate(String resourceUri, Property property, boolean createNewProperty,
-			UpdateRdfNodeBuilder newValueBuilder) {
+	public RdfResourceUpdate(String resourceUri, Property property, boolean createNewProperty, UpdateRdfNodeBuilder newValueBuilder) {
 		this.resourceUri = Objects.requireNonNull(resourceUri);
 		this.property = Objects.requireNonNull(property);
 		this.newValueBuilder = Objects.requireNonNull(newValueBuilder);

@@ -125,8 +125,7 @@ public enum LicenseList {
 			}
 			if (response.getStatusLine().getStatusCode() != 200) {
 				throw new LicenseRetrievalException("Error accessing " + licenseUri + ". Status returned: "
-						+ response.getStatusLine().getStatusCode() + ". Reason:"
-						+ response.getStatusLine().getReasonPhrase());
+						+ response.getStatusLine().getStatusCode() + ". Reason:" + response.getStatusLine().getReasonPhrase());
 			}
 
 			new HTMLRDFaReader().read(model, response.getEntity().getContent(), "http://www.w3.org/1999/xhtml:html");
