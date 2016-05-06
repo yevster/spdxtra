@@ -8,7 +8,7 @@ plugins {
 group 'com.yevster'
 
 version '0.3-SNAPSHOT'
-mainClassName = 'org.quackware.spdxtra.CommandLineTool'
+mainClassName = 'com.yevster.spdxtra.cli.CommandLineTool'
 
 sourceCompatibility = 1.8
 
