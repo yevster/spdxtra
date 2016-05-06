@@ -8,20 +8,28 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 import com.yevster.spdxtra.model.Checksum;
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.FileType;
@@ -29,6 +37,7 @@ import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxDocument;
 import com.yevster.spdxtra.model.Relationship.Type;
 import com.yevster.spdxtra.model.write.License;
+import com.yevster.spdxtra.util.MiscUtils;
 import com.yevster.spdxtra.model.SpdxElement;
 import com.yevster.spdxtra.model.SpdxFile;
 import com.yevster.spdxtra.model.SpdxPackage;
@@ -47,8 +56,7 @@ public final class Write {
 		 * @param spdxId
 		 * @return
 		 */
-		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator,
-				Creator... additionalCreators) {
+		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator, Creator... additionalCreators) {
 			// validation
 			if (!Validate.baseUrl(baseUrl)) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
@@ -67,8 +75,7 @@ public final class Write {
 				model.getGraph().getPrefixMapping().setNsPrefix("spdx", SpdxUris.SPDX_TERMS);
 				Resource newResource = model.createResource(uri, SpdxResourceTypes.DOCUMENT_TYPE);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
-				newResource.addProperty(SpdxProperties.DATA_LICENSE,
-						model.createResource("http://spdx.org/licenses/CC0-1.0"));
+				newResource.addProperty(SpdxProperties.DATA_LICENSE, model.createResource("http://spdx.org/licenses/CC0-1.0"));
 				newResource.addProperty(SpdxProperties.SPEC_VERSION, Constants.DEFAULT_SPDX_VERSION);
 				Resource creationInfo = model.createResource(SpdxResourceTypes.CREATION_INFO_TYPE);
 				creationInfo.addProperty(SpdxProperties.CREATOR, creator.toString());
@@ -106,14 +113,13 @@ public final class Write {
 				Resource spdxPackageType = model.createResource(SpdxUris.SPDX_PACKAGE);
 				Resource newPackage = model.createResource(packageUri, spdxPackageType);
 				newPackage.addLiteral(SpdxProperties.SPDX_NAME, packageSpdxName);
-				newPackage.addLiteral(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
-						NoneNoAssertionOrValue.AbsentValue.NOASSERTION.getUri());
+				newPackage.addLiteral(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION, NoneNoAssertionOrValue.AbsentValue.NOASSERTION.getUri());
 
 			};
 		}
 
-		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId,
-				String packageSpdxId, final String packageSpdxName) {
+		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
+				final String packageSpdxName) {
 
 			ModelUpdate createPackage = addPackage(documentBaseUrl, documentSpdxId, packageSpdxId, packageSpdxName);
 
@@ -147,8 +153,7 @@ public final class Write {
 		 * @param dateTime
 		 * @return
 		 */
-		public static ModelUpdate updateCreationDate(String documentBaseUrl, String documentSpdxId,
-				ZonedDateTime dateTime) {
+		public static ModelUpdate updateCreationDate(String documentBaseUrl, String documentSpdxId, ZonedDateTime dateTime) {
 			ZonedDateTime utcTime = dateTime.withZoneSameInstant(ZoneId.of("UTC"));
 			String newTimeToWrite = utcTime.format(Constants.SPDX_DATE_FORMATTER);
 			return (model) -> {
@@ -191,8 +196,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText) {
-			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT,
-					copyrightText.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT, copyrightText.getLiteralOrUriValue());
 		}
 
 		public static ModelUpdate addFile(String baseUrl, String pkgSpidxId, String fileSpdxId, String newFileName) {
@@ -218,8 +222,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate declaredLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
-					(m) -> license.getRdfNode(m));
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false, (m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -241,8 +244,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate concludedLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false,
-					(m) -> license.getRdfNode(m));
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false, (m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -254,8 +256,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate filesAnalyzed(String packageUri, boolean newValue) {
-			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED,
-					Boolean.toString(newValue));
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED, Boolean.toString(newValue));
 		}
 
 		/**
@@ -280,8 +281,7 @@ public final class Write {
 		 * @param downloadLocation
 		 * @return
 		 */
-		public static RdfResourceUpdate packageDownloadLocation(String packageUri,
-				NoneNoAssertionOrValue downloadLocation) {
+		public static RdfResourceUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
 					downloadLocation.getLiteralOrUriValue());
 		}
@@ -290,8 +290,58 @@ public final class Write {
 		 * Generates an update that sets the package's homepage
 		 */
 		public static RdfResourceUpdate homepage(String packageUri, NoneNoAssertionOrValue homepage) {
-			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE,
-					homepage.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE, homepage.getLiteralOrUriValue());
+		}
+
+		/**
+		 * Computes the package's verification code - required for all packages
+		 * where filesAnalyzed is true or omitted. Once executed, no new files
+		 * should be added to the package and filesAnalyzed should not be
+		 * modified. (not enforced)
+		 */
+		public static ModelUpdate finalize(String packageUri) {
+			return (Model m) -> {
+				Resource packageResource = m.getResource(packageUri);
+				// Package must exist.
+				if (!packageResource.listProperties().hasNext()) {
+					throw new IllegalArgumentException("Package " + packageUri + " does not exist.");
+				}
+
+				packageResource.removeAll(SpdxProperties.PACKAGE_VERIFICATION_CODE);
+
+				// If filesAnalyzed=false, there must be no code.
+				Statement filesAnalyzedStatement = packageResource.getProperty(SpdxProperties.FILES_ANALYZED);
+				if (filesAnalyzedStatement != null && !filesAnalyzedStatement.getBoolean())
+					return;
+
+				StmtIterator it = packageResource.listProperties(SpdxProperties.HAS_FILE);
+				Stream<Statement> statements = MiscUtils.toLinearStream(it);
+				// We now have a bunch of triples whose objects are files.
+				// Let's do some functional magic:
+
+				// Get the objects of the triples as resources - SPDX Files
+				String concatenatedSha1 = statements.map(Statement::getObject).map(RDFNode::asResource)
+						// Get the checksums of these files (each file can have
+						// multiple)
+						.sorted(Write.byRequiredLiteralProperty(SpdxProperties.FILE_NAME))
+						.flatMap(file -> MiscUtils.toLinearStream(file.listProperties(SpdxProperties.CHECKSUM)))
+						// Convert them to resources
+						.map(Statement::getObject).map(RDFNode::asResource)
+						// Remove the non-Sha-1 checksums
+						.filter(checksum -> StringUtils.equals(Checksum.Algorithm.SHA1.getUri(),
+								checksum.getProperty(SpdxProperties.CHECKSUM_ALGORITHM).getObject().asResource().getURI()))
+						// Get the sha1 digests
+						.map(checksum -> checksum.getProperty(SpdxProperties.CHECKSUM_VALUE).getObject().asLiteral().getString())
+						// Concatenate the SHA1 digests
+						.collect(Collectors.joining());
+				String verificationCode = DigestUtils.shaHex(concatenatedSha1);
+
+				// Let's write it into the model.
+				Resource pvcResource = m.createResource(SpdxResourceTypes.PACKAGE_VERIFICATION_CODE_TYPE);
+				pvcResource.addLiteral(SpdxProperties.PACKAGE_VERIFICATION_CODE_VALUE, verificationCode);
+				packageResource.addProperty(SpdxProperties.PACKAGE_VERIFICATION_CODE, pvcResource);
+
+			};
 		}
 	}
 
@@ -318,20 +368,21 @@ public final class Write {
 			// Exactly the same property as in Package, so not duplicating.
 			return Write.Package.concludedLicense(fileUri, license);
 		}
-		
-		public static ModelUpdate copyrightText(String fileUri, NoneNoAssertionOrValue copyrightText){
+
+		public static ModelUpdate copyrightText(String fileUri, NoneNoAssertionOrValue copyrightText) {
 			// Exactly the same property as in Package, so not duplicating.
 			return Write.Package.copyrightText(fileUri, copyrightText);
 		}
-		
+
 		/**
 		 * Add license info in file
+		 * 
 		 * @param fileUri
 		 * @param license
 		 * @return
 		 */
-		public static ModelUpdate licenseInfoInFile(String fileUri, final License license){
-			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false, (Model m)->license.getRdfNode(m));
+		public static ModelUpdate licenseInfoInFile(String fileUri, final License license) {
+			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false, (Model m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -362,9 +413,9 @@ public final class Write {
 		public static ModelUpdate checksums(String fileUri, String sha1, Checksum... others) {
 			return (Model m) -> {
 				Resource file = m.getResource(fileUri);
-				file.removeAll(SpdxProperties.CHECKSUM);	
+				file.removeAll(SpdxProperties.CHECKSUM);
 				file.addProperty(SpdxProperties.CHECKSUM, Checksum.sha1(sha1).asResource(m));
-				for (Checksum checksum : others){
+				for (Checksum checksum : others) {
 					file.addProperty(SpdxProperties.CHECKSUM, checksum.asResource(m));
 				}
 			};
@@ -444,8 +495,8 @@ public final class Write {
 
 	}
 
-	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target,
-			final Optional<String> comment, final Relationship.Type type) {
+	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target, final Optional<String> comment,
+			final Relationship.Type type) {
 		return addRelationship(source.getUri(), target.getUri(), comment, type);
 	}
 
@@ -472,8 +523,7 @@ public final class Write {
 	 * @param newFileName
 	 * @return
 	 */
-	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId,
-			String newFileName) {
+	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId, String newFileName) {
 		final String parentUri = baseUrl + '#' + parentSpdxId;
 		final String fileUri = baseUrl + '#' + newFileSpdxId;
 
@@ -500,4 +550,17 @@ public final class Write {
 
 	}
 
+	
+	/**
+	 * Returns a comparator by required property. If the property is not present, a NullPointerException is thrown.
+	 * @param property
+	 * @return
+	 */
+	protected static Comparator<Resource> byRequiredLiteralProperty(Property property){
+		return Ordering.from((Resource r1, Resource r2) ->{
+			String s1 = Objects.requireNonNull(r1).getProperty(property).getObject().asLiteral().getString();
+			String s2 = Objects.requireNonNull(r2).getProperty(property).getObject().asLiteral().getString();
+			return Ordering.natural().nullsFirst().compare(s1, s2);
+		}).nullsFirst();
+	}
 }

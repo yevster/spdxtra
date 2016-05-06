@@ -88,9 +88,22 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 	}
 
 	public Stream<SpdxFile> getFiles() {
-		Stream<Statement> fileStatementStream = MiscUtils
-				.toLinearStream(this.rdfResource.listProperties(SpdxProperties.HAS_FILE));
+		Stream<Statement> fileStatementStream = MiscUtils.toLinearStream(this.rdfResource.listProperties(SpdxProperties.HAS_FILE));
 		return fileStatementStream.map(Statement::getObject).map(RDFNode::asResource).map((r) -> new SpdxFile(r));
+	}
+
+	/**
+	 * Returns the package verification code, if one is present (i.e.
+	 * filesAnalyzed = true or omitted). If filesAnalyzed is false, returns
+	 * empty.
+	 * 
+	 * @return
+	 */
+	public Optional<String> getPackageVerificationCode() {
+		Optional<Resource> pvc = getPropertyAsResource(SpdxProperties.PACKAGE_VERIFICATION_CODE);
+		if (!pvc.isPresent())
+			return Optional.empty();
+		return Optional.of(pvc.get().getProperty(SpdxProperties.PACKAGE_VERIFICATION_CODE_VALUE).getObject().asLiteral().getString());
 
 	}
 
