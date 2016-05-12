@@ -58,12 +58,14 @@ public class TestFileOperations {
 		final String mockSha256 = DigestUtils.sha256Hex("My sum");
 		final String extractedLicense = "This is the extracting license. Once this was in a file. Now it is here.";
 		final String copyrightText = "Copyright (C) 2016 Aweomsness Awesome, Inc.";
+		final String comment = "No comment. Carry on. Wait, this is a comment. Curses!";
 
 		Write.applyUpdatesInOneTransaction(dataset, Write.Package.addFile(baseUrl, packageSpdxId, "myFile", fileName),
 				Write.File.fileTypes(expectedFileUrl, FileType.OTHER, FileType.APPLICATION),
 				Write.File.concludedLicense(expectedFileUrl, License.NONE),
 				Write.File.checksums(expectedFileUrl, mockSha1, Checksum.md5(mockMd5)),
-				Write.File.licenseInfoInFile(expectedFileUrl, License.extracted(extractedLicense, baseUrl, "LicenseRef-el")));
+				Write.File.licenseInfoInFile(expectedFileUrl,
+						License.extracted(extractedLicense, baseUrl, "LicenseRef-el")));
 		reloadPackage();
 		List<SpdxFile> allFilesInPackage = pkg.getFiles().collect(Collectors.toList());
 		assertEquals("Expected to one file in package after adding one file.", 1, allFilesInPackage.size());
@@ -75,19 +77,23 @@ public class TestFileOperations {
 		assertEquals(AbsentValue.NONE.getUri(),
 				file.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).get().getURI());
 		assertEquals(Sets.newHashSet(Checksum.md5(mockMd5), Checksum.sha1(mockSha1)), file.getChecksums());
-		//Test default copyright - NOASSERTION
+		// Test default copyright - NOASSERTION
 		assertEquals(SpdxUris.NO_ASSERTION, file.getCopyrightText().getLiteralOrUriValue());
-		
+		assertEquals("Empty optional not returned for uninitialized comment", Optional.empty(), file.getComment());
+
 		// Test overwrites
 		Write.applyUpdatesInOneTransaction(dataset,
 				Write.File.checksums(file.getUri(), mockSha1, Checksum.sha256(mockSha256)),
-				Write.File.copyrightText(expectedFileUrl, NoneNoAssertionOrValue.of(copyrightText)));
+				Write.File.copyrightText(expectedFileUrl, NoneNoAssertionOrValue.of(copyrightText)),
+				Write.File.comment(file.getUri(), comment));
 
 		// Reload
 		file = new SpdxFile(Read.lookupResourceByUri(dataset, expectedFileUrl).get());
 		assertEquals(Sets.newHashSet(Checksum.sha256(mockSha256), Checksum.sha1(mockSha1)), file.getChecksums());
-		assertEquals(baseUrl+"#LicenseRef-el", file.rdfResource.getPropertyResourceValue(SpdxProperties.LICENSE_INFO_IN_FILE).getURI());
+		assertEquals(baseUrl + "#LicenseRef-el",
+				file.rdfResource.getPropertyResourceValue(SpdxProperties.LICENSE_INFO_IN_FILE).getURI());
 		assertEquals(copyrightText, file.getCopyrightText().getValue().get());
+		assertEquals(comment, file.getComment().get());
 	}
 
 	@Test

@@ -9,6 +9,7 @@ import com.yevster.spdxtra.util.MiscUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,15 @@ public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 						.map(Checksum::fromResource)
 						.collect(Collectors.toSet());
 		return Collections.unmodifiableSet(result);
+	}
+	
+	/**
+	 * @return
+	 */
+	public Optional<String> getComment(){
+		Statement stmt =  rdfResource.getProperty(SpdxProperties.RDF_COMMENT);
+		if (stmt == null) return Optional.empty();
+		return Optional.of(stmt.getObject().asLiteral().getString());
 	}
 
 	public NoneNoAssertionOrValue getCopyrightText() {
