@@ -53,16 +53,15 @@ public class TestDocumentOperations {
 		assertTrue(creationDateTime.isAfter(ZonedDateTime.now().minusHours(1)));
 
 		// The data license should have no properties, just the URI;
-		assertEquals("http://spdx.org/licenses/CC0-1.0",
-				document.getPropertyAsResource(SpdxProperties.DATA_LICENSE).get().getURI());
+		assertEquals("http://spdx.org/licenses/CC0-1.0", document.getPropertyAsResource(SpdxProperties.DATA_LICENSE).get().getURI());
 		// Verify creation Info
 		Resource creationInfo = document.getPropertyAsResource(SpdxProperties.CREATION_INFO).get();
 		assertNotNull(creationInfo);
 		StmtIterator creatorStatements = creationInfo.listProperties(SpdxProperties.CREATOR);
 		Set<String> creatorStrings = stmtIteratorToStringSet(creatorStatements);
 
-		Set<String> expectedCreators = ImmutableSet.of("Person: Albert Einstein (aEinstein@princeton.edu)",
-				"Tool: SpdXtra", "Organization: Aperture Science, LLC. ()");
+		Set<String> expectedCreators = ImmutableSet.of("Person: Albert Einstein (aEinstein@princeton.edu)", "Tool: SpdXtra",
+				"Organization: Aperture Science, LLC. ()");
 		assertEquals("Unexpected creator info", 0, Sets.symmetricDifference(expectedCreators, creatorStrings).size());
 
 	}
@@ -80,6 +79,21 @@ public class TestDocumentOperations {
 
 		document = Read.Document.get(dataset);
 		assertEquals(expectedCreationDate, document.getCreationTime());
+
+	}
+
+	@Test
+	public void testModifySpecVersion() {
+		Dataset dataset = DatasetFactory.createTxnMem();
+		final String baseUrl = "http://foo";
+		final String spdxId = "SPDXRef-bar";
+		final String name = "foobar";
+
+		Write.applyUpdatesInOneTransaction(dataset, Write.New.document(baseUrl, spdxId, name, Creator.person("Myself", Optional.empty())),
+				Write.Document.specVersion(baseUrl, spdxId, "666. Yep, you're doomed. DOOOOOMED!"));
+		SpdxDocument document = Read.Document.get(dataset);
+		assertEquals("666. Yep, you're doomed. DOOOOOMED!", document.getSpecVersion());
+		
 
 	}
 

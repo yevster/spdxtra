@@ -201,6 +201,21 @@ public final class Write {
 
 		}
 
+		/**
+		 * Sets the document specification version. NOTE: Some methods may not
+		 * be supported for some versions. SpdXtra does not currently protect
+		 * you from using elements that may be illegal in a non-default version.
+		 * Alter this property at your own risk and peril.
+		 * 
+		 * @param documentBaseUrl
+		 * @param documentSpdxId
+		 * @param specVersion
+		 * @return
+		 */
+		public static ModelUpdate specVersion(String documentBaseUrl, String documentSpdxId, String specVersion) {
+			return new RdfResourceUpdate(documentBaseUrl + "#" + documentSpdxId, SpdxProperties.SPEC_VERSION, false,
+					(m) -> m.createLiteral(specVersion));
+		}
 	}
 
 	public static final class Package {
