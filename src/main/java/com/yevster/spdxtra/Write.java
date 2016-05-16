@@ -6,7 +6,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
@@ -25,25 +27,24 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.rdf.model.impl.LiteralImpl;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
+import com.yevster.spdxtra.model.Annotation.Type;
 import com.yevster.spdxtra.model.Checksum;
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.FileType;
 import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxDocument;
-import com.yevster.spdxtra.model.Relationship.Type;
-import com.yevster.spdxtra.model.write.License;
-import com.yevster.spdxtra.util.MiscUtils;
 import com.yevster.spdxtra.model.SpdxElement;
 import com.yevster.spdxtra.model.SpdxFile;
 import com.yevster.spdxtra.model.SpdxPackage;
+import com.yevster.spdxtra.model.write.License;
+import com.yevster.spdxtra.util.MiscUtils;
 
 public final class Write {
+
 	@FunctionalInterface
 	public static interface ModelUpdate {
 		void apply(Model model);
@@ -57,8 +58,7 @@ public final class Write {
 		 * @param spdxId
 		 * @return
 		 */
-		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator,
-				Creator... additionalCreators) {
+		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator, Creator... additionalCreators) {
 			// validation
 			if (!Validate.baseUrl(baseUrl)) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
@@ -77,8 +77,7 @@ public final class Write {
 				model.getGraph().getPrefixMapping().setNsPrefix("spdx", SpdxUris.SPDX_TERMS);
 				Resource newResource = model.createResource(uri, SpdxResourceTypes.DOCUMENT_TYPE);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
-				newResource.addProperty(SpdxProperties.DATA_LICENSE,
-						model.createResource("http://spdx.org/licenses/CC0-1.0"));
+				newResource.addProperty(SpdxProperties.DATA_LICENSE, model.createResource("http://spdx.org/licenses/CC0-1.0"));
 				newResource.addProperty(SpdxProperties.SPEC_VERSION, Constants.DEFAULT_SPDX_VERSION);
 				Resource creationInfo = model.createResource(SpdxResourceTypes.CREATION_INFO_TYPE);
 				creationInfo.addProperty(SpdxProperties.CREATOR, creator.toString());
@@ -92,6 +91,40 @@ public final class Write {
 			};
 
 		}
+
+		public static ModelUpdate annotation(String baseUrl, String parentSpdxId, Type type, ZonedDateTime date, Creator annotator,
+				Optional<String> comment) {
+			// validation
+			if (!Validate.baseUrl(baseUrl)) {
+				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
+			}
+			if (!Validate.spdxId(parentSpdxId)) {
+				throw new IllegalArgumentException("Illegal spdxId. Must be of the form SPDXRef-*");
+			}
+			Objects.requireNonNull(type);
+			Objects.requireNonNull(date);
+			Objects.requireNonNull(comment);
+
+			return (model) -> {
+
+				Resource parentResource = model.getResource(baseUrl + "#" + parentSpdxId);
+				if (parentResource.listProperties().toList().size() == 0) {
+					// Parent resource does not exist.
+					throw new IllegalArgumentException("Parent resource " + parentResource.getURI() + " does not exist.");
+				}
+
+				Resource newAnnotationResource = model.createResource(SpdxResourceTypes.ANNOTATION_TYPE);
+				newAnnotationResource.addLiteral(SpdxProperties.ANNOTATION_DATE, date.format(DateTimeFormatter.ISO_INSTANT));
+				newAnnotationResource.addProperty(SpdxProperties.ANNOTATION_TYPE, type.getUri());
+				if (comment.isPresent()) {
+					newAnnotationResource.addLiteral(SpdxProperties.RDF_COMMENT, comment.get());
+				}
+				newAnnotationResource.addProperty(SpdxProperties.ANNOTATOR, annotator.toString());
+				parentResource.addProperty(SpdxProperties.ANNOTATION, newAnnotationResource);
+
+			};
+		}
+
 	}
 
 	public static final class Document {
@@ -116,14 +149,13 @@ public final class Write {
 				Resource spdxPackageType = model.createResource(SpdxUris.SPDX_PACKAGE);
 				Resource newPackage = model.createResource(packageUri, spdxPackageType);
 				newPackage.addLiteral(SpdxProperties.SPDX_NAME, packageSpdxName);
-				newPackage.addLiteral(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
-						NoneNoAssertionOrValue.AbsentValue.NOASSERTION.getUri());
+				newPackage.addLiteral(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION, NoneNoAssertionOrValue.AbsentValue.NOASSERTION.getUri());
 
 			};
 		}
 
-		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId,
-				String packageSpdxId, final String packageSpdxName) {
+		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
+				final String packageSpdxName) {
 
 			ModelUpdate createPackage = addPackage(documentBaseUrl, documentSpdxId, packageSpdxId, packageSpdxName);
 
@@ -132,8 +164,8 @@ public final class Write {
 
 			return (model) -> {
 				createPackage.apply(model);
-				Write.addRelationship(documentUri, packageUri, Optional.empty(), Type.DESCRIBES).apply(model);
-				Write.addRelationship(packageUri, documentUri, Optional.empty(), Type.DESCRIBED_BY).apply(model);
+				Write.addRelationship(documentUri, packageUri, Optional.empty(), Relationship.Type.DESCRIBES).apply(model);
+				Write.addRelationship(packageUri, documentUri, Optional.empty(), Relationship.Type.DESCRIBED_BY).apply(model);
 
 			};
 		}
@@ -157,8 +189,7 @@ public final class Write {
 		 * @param dateTime
 		 * @return
 		 */
-		public static ModelUpdate updateCreationDate(String documentBaseUrl, String documentSpdxId,
-				ZonedDateTime dateTime) {
+		public static ModelUpdate updateCreationDate(String documentBaseUrl, String documentSpdxId, ZonedDateTime dateTime) {
 			ZonedDateTime utcTime = dateTime.withZoneSameInstant(ZoneId.of("UTC"));
 			String newTimeToWrite = utcTime.format(Constants.SPDX_DATE_FORMATTER);
 			return (model) -> {
@@ -201,8 +232,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText) {
-			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT,
-					copyrightText.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT, copyrightText.getLiteralOrUriValue());
 		}
 
 		public static ModelUpdate addFile(String baseUrl, String pkgSpidxId, String fileSpdxId, String newFileName) {
@@ -228,8 +258,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate declaredLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
-					(m) -> license.getRdfNode(m));
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false, (m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -251,8 +280,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate concludedLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false,
-					(m) -> license.getRdfNode(m));
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false, (m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -264,8 +292,7 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate filesAnalyzed(String packageUri, boolean newValue) {
-			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED,
-					Boolean.toString(newValue));
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED, Boolean.toString(newValue));
 		}
 
 		/**
@@ -290,8 +317,7 @@ public final class Write {
 		 * @param downloadLocation
 		 * @return
 		 */
-		public static RdfResourceUpdate packageDownloadLocation(String packageUri,
-				NoneNoAssertionOrValue downloadLocation) {
+		public static RdfResourceUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
 					downloadLocation.getLiteralOrUriValue());
 		}
@@ -300,8 +326,7 @@ public final class Write {
 		 * Generates an update that sets the package's homepage
 		 */
 		public static RdfResourceUpdate homepage(String packageUri, NoneNoAssertionOrValue homepage) {
-			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE,
-					homepage.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE, homepage.getLiteralOrUriValue());
 		}
 
 		/**
@@ -340,11 +365,9 @@ public final class Write {
 						.map(Statement::getObject).map(RDFNode::asResource)
 						// Remove the non-Sha-1 checksums
 						.filter(checksum -> StringUtils.equals(Checksum.Algorithm.SHA1.getUri(),
-								checksum.getProperty(SpdxProperties.CHECKSUM_ALGORITHM).getObject().asResource()
-										.getURI()))
+								checksum.getProperty(SpdxProperties.CHECKSUM_ALGORITHM).getObject().asResource().getURI()))
 						// Get the sha1 digests
-						.map(checksum -> checksum.getProperty(SpdxProperties.CHECKSUM_VALUE).getObject().asLiteral()
-								.getString())
+						.map(checksum -> checksum.getProperty(SpdxProperties.CHECKSUM_VALUE).getObject().asLiteral().getString())
 						// Concatenate the SHA1 digests
 						.collect(Collectors.joining());
 				String verificationCode = DigestUtils.shaHex(concatenatedSha1);
@@ -396,13 +419,13 @@ public final class Write {
 
 		/**
 		 * Generates an update to set the file comment
+		 * 
 		 * @param uri
 		 * @param commentText
 		 * @return
 		 */
 		public static ModelUpdate comment(String uri, String commentText) {
-			return new RdfResourceUpdate(uri, SpdxProperties.RDF_COMMENT, false,
-					(m) -> ResourceFactory.createPlainLiteral(commentText));
+			return new RdfResourceUpdate(uri, SpdxProperties.RDF_COMMENT, false, (m) -> ResourceFactory.createPlainLiteral(commentText));
 		}
 
 		/**
@@ -413,8 +436,7 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate licenseInfoInFile(String fileUri, final License license) {
-			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false,
-					(Model m) -> license.getRdfNode(m));
+			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false, (Model m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -527,8 +549,8 @@ public final class Write {
 
 	}
 
-	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target,
-			final Optional<String> comment, final Relationship.Type type) {
+	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target, final Optional<String> comment,
+			final Relationship.Type type) {
 		return addRelationship(source.getUri(), target.getUri(), comment, type);
 	}
 
@@ -555,8 +577,7 @@ public final class Write {
 	 * @param newFileName
 	 * @return
 	 */
-	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId,
-			String newFileName) {
+	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId, String newFileName) {
 		final String parentUri = baseUrl + '#' + parentSpdxId;
 		final String fileUri = baseUrl + '#' + newFileSpdxId;
 
@@ -572,8 +593,7 @@ public final class Write {
 						"File already exists. Adding existing files is currently unsupported.  " + newFileName);
 			}
 			newFileResource.addLiteral(SpdxProperties.FILE_NAME, newFileName);
-			newFileResource.addProperty(SpdxProperties.COPYRIGHT_TEXT,
-					NoneNoAssertionOrValue.NO_ASSERTION.getLiteralOrUriValue());
+			newFileResource.addProperty(SpdxProperties.COPYRIGHT_TEXT, NoneNoAssertionOrValue.NO_ASSERTION.getLiteralOrUriValue());
 			Resource parentResource = model.createResource(parentUri);
 			if (!parentResource.listProperties().hasNext()) { // Parent doesn't
 																// exist.
@@ -598,4 +618,5 @@ public final class Write {
 			return Ordering.natural().nullsFirst().compare(s1, s2);
 		}).nullsFirst();
 	}
+
 }

@@ -1,5 +1,7 @@
 package com.yevster.spdxtra;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -8,23 +10,16 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.tdb.TDB;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.yevster.spdxtra.NoneNoAssertionOrValue.AbsentValue;
-import com.yevster.spdxtra.Write.File;
 import com.yevster.spdxtra.model.Checksum;
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.FileType;
-import com.yevster.spdxtra.model.SpdxDocument;
 import com.yevster.spdxtra.model.SpdxFile;
 import com.yevster.spdxtra.model.SpdxPackage;
 import com.yevster.spdxtra.model.write.License;
-
-import org.junit.Assert.*;
-
-import static org.junit.Assert.*;
 
 public class TestFileOperations {
 	private static final String baseUrl = "http://www.example.org/baseUrl";

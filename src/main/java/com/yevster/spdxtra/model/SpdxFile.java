@@ -1,14 +1,6 @@
 package com.yevster.spdxtra.model;
 
-import com.github.andrewoma.dexx.collection.Sets;
-import com.google.common.base.MoreObjects;
-import com.yevster.spdxtra.NoneNoAssertionOrValue;
-import com.yevster.spdxtra.SpdxProperties;
-import com.yevster.spdxtra.SpdxUris;
-import com.yevster.spdxtra.util.MiscUtils;
-
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,6 +8,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
+
+import com.google.common.base.MoreObjects;
+import com.yevster.spdxtra.NoneNoAssertionOrValue;
+import com.yevster.spdxtra.SpdxProperties;
+import com.yevster.spdxtra.SpdxUris;
+import com.yevster.spdxtra.util.MiscUtils;
 
 public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 	public static final String RDF_TYPE = SpdxUris.SPDX_TERMS + "File";

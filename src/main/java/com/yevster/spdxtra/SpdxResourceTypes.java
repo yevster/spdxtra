@@ -10,4 +10,6 @@ public final class SpdxResourceTypes {
 	public static final Resource CHECKSUM_TYPE = ResourceFactory.createResource(SpdxUris.SPDX_TERMS + "Checksum");
 	public static final Resource PACKAGE_VERIFICATION_CODE_TYPE = ResourceFactory
 			.createResource(SpdxUris.SPDX_TERMS + "PackageVerificationCode");
+	public static final Resource ANNOTATION_TYPE = ResourceFactory.createResource(SpdxUris.SPDX_TERMS + "Annotation");
+
 }
