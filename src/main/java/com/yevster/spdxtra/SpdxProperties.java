@@ -35,6 +35,12 @@ public final class SpdxProperties {
 	public static final Property CHECKSUM = new PropertyImpl(SpdxUris.SPDX_TERMS, "checksum");
 	public static final Property CHECKSUM_VALUE = new PropertyImpl(SpdxUris.SPDX_TERMS, "checksumValue");
 	public static final Property CHECKSUM_ALGORITHM = new PropertyImpl(SpdxUris.SPDX_TERMS, "algorithm");
+	public static final Property ARTIFACT_OF = new PropertyImpl(SpdxUris.SPDX_TERMS, "artifactOf");
+	
+	//DOAP VOCABULARY
+	public static final Property DOAP_HOMEPAGE = new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "homepage");
+	public static final Property DOAP_NAME = new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "name");
+	
 
 	// LICENSES
 	public static final Property LICENSE_DECLARED = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseDeclared");

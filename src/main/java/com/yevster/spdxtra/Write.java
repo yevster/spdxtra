@@ -429,6 +429,22 @@ public final class Write {
 		}
 
 		/**
+		 * Generates an update to set the file's artifactOf property (Deprecated
+		 * in SPDX 2.1). Project name is required. If homepage is null or blank,
+		 * UNKNOWN will be used.
+		 */
+		public static ModelUpdate artifactOf(String fileUri, String projectName, String projectHomepage) {
+			Validate.name(projectName);
+
+			return new RdfResourceUpdate(fileUri, SpdxProperties.ARTIFACT_OF, true, (m) -> {
+				Resource doapProject = m.createResource(SpdxResourceTypes.DOAP_PROJECT);
+				doapProject.addProperty(SpdxProperties.DOAP_HOMEPAGE, StringUtils.isBlank(projectHomepage) ? "UNKNOWN" : projectHomepage);
+				doapProject.addProperty(SpdxProperties.DOAP_NAME, projectName);
+				return doapProject;
+			});
+		}
+
+		/**
 		 * Add license info in file
 		 * 
 		 * @param fileUri
