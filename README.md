@@ -1,7 +1,7 @@
 ![SpdXtra](http://s1.postimg.org/y28xxq473/image_2.jpg)
 
 [![Build Status](https://travis-ci.org/yevster/spdxtra.svg?branch=master)](https://travis-ci.org/yevster/spdxtra)
-
+[ ![Download](https://api.bintray.com/packages/yevster/maven/SpdXtra/images/download.svg) ](https://bintray.com/yevster/maven/SpdXtra/_latestVersion)
 ##Project Description
 
 SPDX is a standard, championed by The Linux Foundation, for describing the contents and, most importantly, licensing information for software products.
