@@ -27,6 +27,9 @@ public final class SpdxProperties {
 	public static final Property PACKAGE_VERIFICATION_CODE_VALUE = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageVerificationCodeValue");
 	public static final Property FILES_ANALYZED = new PropertyImpl(SpdxUris.SPDX_TERMS, "filesAnalyzed");
 	public static final Property HOMEPAGE = new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "homepage");
+	public static final Property SUMMARY = new PropertyImpl(SpdxUris.SPDX_TERMS, "summary");
+	public static final Property DESCRIPTION = new PropertyImpl(SpdxUris.SPDX_TERMS, "description");
+	public static final Property SOURCE_INFO = new PropertyImpl(SpdxUris.SPDX_TERMS, "sourceInfo");
 
 	// FILE PROPERTIES
 	public static final Property HAS_FILE = new PropertyImpl(SpdxUris.SPDX_TERMS, "hasFile");
@@ -36,6 +39,8 @@ public final class SpdxProperties {
 	public static final Property CHECKSUM_VALUE = new PropertyImpl(SpdxUris.SPDX_TERMS, "checksumValue");
 	public static final Property CHECKSUM_ALGORITHM = new PropertyImpl(SpdxUris.SPDX_TERMS, "algorithm");
 	public static final Property ARTIFACT_OF = new PropertyImpl(SpdxUris.SPDX_TERMS, "artifactOf");
+	public static final Property NOTICE_TEXT = new PropertyImpl(SpdxUris.SPDX_TERMS, "noticeText");
+	public static final Property FILE_CONTRIBUTOR = new PropertyImpl(SpdxUris.SPDX_TERMS, "fileContributor");
 	
 	//DOAP VOCABULARY
 	public static final Property DOAP_HOMEPAGE = new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "homepage");
@@ -45,6 +50,7 @@ public final class SpdxProperties {
 	// LICENSES
 	public static final Property LICENSE_DECLARED = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseDeclared");
 	public static final Property LICENSE_CONCLUDED = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseConcluded");
+	public static final Property LICENSE_COMMENTS = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseComments");
 	public static final Property LICENSE_MEMBER = new PropertyImpl(SpdxUris.SPDX_TERMS, "member");
 	public static final Property LICENSE_INFO_IN_FILE = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseInfoInFile");
 	public static final Property LICENSE_EXTRACTED_TEXT = new PropertyImpl(SpdxUris.SPDX_TERMS, "extractedText");

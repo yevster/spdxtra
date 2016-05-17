@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
@@ -51,6 +53,18 @@ public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 	}
 	
 	/**
+	 * Returns all the contributors defined on this file.
+	 */
+	public Set<String> getContributors(){
+		Set<String> result = 
+				MiscUtils.toLinearStream(this.rdfResource.listProperties(SpdxProperties.FILE_CONTRIBUTOR))
+				.map(Statement::getObject)
+				.map(RDFNode::asLiteral)
+				.map(Literal::getString)
+				.collect(Collectors.toSet());
+		return Collections.unmodifiableSet(result);
+	}
+	/**
 	 * @return
 	 */
 	public Optional<String> getComment(){
@@ -63,6 +77,13 @@ public class SpdxFile extends SpdxElement implements SpdxIdentifiable {
 		return NoneNoAssertionOrValue.parse(rdfResource.getProperty(SpdxProperties.COPYRIGHT_TEXT).getString());
 	}
 
+	/**
+	 * Returns the file's notice text, if present.
+	 */
+	public Optional<String> getNoticeText(){
+		return getOptionalPropertyAsString(SpdxProperties.NOTICE_TEXT);
+	}
+	
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(SpdxPackage.class).add("File name", getFileName()).toString();

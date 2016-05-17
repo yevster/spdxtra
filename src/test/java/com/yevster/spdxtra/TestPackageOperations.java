@@ -63,19 +63,21 @@ public class TestPackageOperations {
 		assertEquals(SpdxPackage.class, relationships.get(0).getRelatedElement().getClass());
 		SpdxPackage pkg = (SpdxPackage) relationships.get(0).getRelatedElement();
 
-		List<RdfResourceUpdate> updates = new LinkedList<>();
+		List<ModelUpdate> updates = new LinkedList<>();
 		// Let's update the name
 		final String newName = "Definitely not the old name";
 		final String oldName = pkg.getName();
 		assertEquals("SPDX tools", oldName);
-		RdfResourceUpdate update = Write.Package.name(pkg.getUri(), newName);
+		ModelUpdate update = Write.Package.name(pkg.getUri(), newName);
 		// The package should not have been changed.
 		assertEquals(oldName, pkg.getName());
-		assertEquals(pkg.getUri(), update.getResourceUri());
+		//This is a unit test, so we'll break encapsulation to look inside:
+		assertEquals(pkg.getUri(), ((RdfResourceUpdate)update).getResourceUri());
 		updates.add(Write.Package.filesAnalyzed(pkg.getUri(), false));
+		updates.add(Write.Package.licenseComments(pkg.getUri(), "Nice license!"));
+		updates.add(Write.Package.comment(pkg.getUri(), "Package comment, yeeeah!"));
 		updates.add(update);
 
-		// Any other updates to add before we apply them all?
 		final String packageDownloadLocation = "git+https://git.myproject.org/MyProject.git@v10.0#src/lib.c";
 		updates.add(Write.Package.packageDownloadLocation(pkg.getUri(), NoneNoAssertionOrValue.of(packageDownloadLocation)));
 
@@ -84,6 +86,14 @@ public class TestPackageOperations {
 
 		final String packageHomePage = "http://www.example.org/packageOfDoom";
 		updates.add(Write.Package.homepage(pkg.getUri(), NoneNoAssertionOrValue.of(packageHomePage)));
+		
+		final String summary = "This is a summary";
+		final String description = "This is a detailed description. It's even more boring than the summary.";
+		final String sourceInfo = "This is the source info. Use the source, Luke!";
+		
+		updates.add(Write.Package.description(pkg.getUri(), description));
+		updates.add(Write.Package.summary(pkg.getUri(), summary));
+		updates.add(Write.Package.sourceInfo(pkg.getUri(), sourceInfo));
 
 		// Apply the updates
 		Write.applyUpdatesInOneTransaction(dataset, updates);
@@ -97,6 +107,11 @@ public class TestPackageOperations {
 		assertEquals(packageDownloadLocation, pkg.getPackageDownloadLocation().getValue().orElse("YOU FAIL!"));
 		assertEquals(packageHomePage, pkg.getHomepage().getValue().orElse("YOU FAIL!"));
 		assertEquals(Optional.of(version), pkg.getVersionInfo());
+		assertEquals("Nice license!", pkg.getOptionalPropertyAsString(SpdxProperties.LICENSE_COMMENTS).get());
+		assertEquals(Optional.of(description), pkg.getDescription());
+		assertEquals(Optional.of(summary), pkg.getSummary());
+		assertEquals(Optional.of(sourceInfo), pkg.getSourceInfo());
+		assertEquals(Optional.of("Package comment, yeeeah!"), pkg.getComment());
 	}
 
 	@Test
@@ -105,11 +120,11 @@ public class TestPackageOperations {
 		SpdxPackage pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 		// Let's set a declared license.
-		RdfResourceUpdate update = Write.Package.declaredLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
+		RdfResourceUpdate update = (RdfResourceUpdate)Write.Package.declaredLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
 		assertEquals(SpdxProperties.LICENSE_DECLARED, update.getProperty());
 
 		// And a concluded license to NOASSERT
-		RdfResourceUpdate update2 = Write.Package.concludedLicense(pkg, License.NOASSERTION);
+		ModelUpdate update2 = Write.Package.concludedLicense(pkg, License.NOASSERTION);
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
 
 		pkg = new SpdxPackage(Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
@@ -117,9 +132,10 @@ public class TestPackageOperations {
 		assertEquals("http://spdx.org/rdf/terms#noassertion", pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).get().getURI());
 
 		// Set the declared license to NONE and concluded license to GPL-2.0
-		update = Write.Package.declaredLicense(pkg, License.NONE);
-		update2 = Write.Package.concludedLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("GPL-2.0").get());
-		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update, update2));
+		
+		Write.applyUpdatesInOneTransaction(dataset, 
+				Write.Package.declaredLicense(pkg, License.NONE),
+				Write.Package.concludedLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("GPL-2.0").get()));
 
 		// Look closer to the metal. Did we create a duplicate property...
 		Resource pkgResource = Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get();

@@ -25,7 +25,12 @@ public abstract class RdfResourceRepresentation {
 
 	protected String getPropertyAsString(String propertyUri) {
 		return getPropertyAsString(new PropertyImpl(propertyUri));
-
+	}
+	
+	protected Optional<String> getOptionalPropertyAsString(Property property){
+		Statement stmt = rdfResource.getProperty(property);
+		if (stmt == null) return Optional.empty();
+		else return Optional.of(stmt.getObject().asLiteral().getString());
 	}
 
 	/**

@@ -62,8 +62,7 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 	 * Returns the file name for this package
 	 */
 	public Optional<String> getPackageFileName() {
-		String val = getPropertyAsString(SpdxProperties.PACKAGE_FILE_NAME);
-		return StringUtils.isBlank(val) ? Optional.empty() : Optional.of(val);
+		return getOptionalPropertyAsString(SpdxProperties.PACKAGE_FILE_NAME);
 	}
 
 	/**
@@ -74,11 +73,39 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 	}
 
 	/**
+	 * Returns the summary description of the package, if present.
+	 */
+	public Optional<String> getSummary(){
+		return getOptionalPropertyAsString(SpdxProperties.SUMMARY);
+	}
+	
+	/**
+	 * Returns the detailed description of the package, if present.
+	 */
+	public Optional<String> getDescription(){
+		return getOptionalPropertyAsString(SpdxProperties.DESCRIPTION);
+	}
+	
+	/**
+	 * Returns the value of the source information field of the package, if present.
+	 */
+	public Optional<String> getSourceInfo(){
+		return getOptionalPropertyAsString(SpdxProperties.SOURCE_INFO);
+	}
+	
+	/**
 	 * Returns the homepage of this package, if one is available. This is an
 	 * optional element. If omitted, NOASSERTION will be returned.
 	 */
 	public NoneNoAssertionOrValue getHomepage() {
 		return getPropertyAsNoneNoAssertionOrValue(SpdxProperties.HOMEPAGE);
+	}
+	
+	/**
+	 * Returns the package's comment, if one is present.
+	 */
+	public Optional<String> getComment(){
+		return getOptionalPropertyAsString(SpdxProperties.RDF_COMMENT);
 	}
 
 	@Override
@@ -107,4 +134,6 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 
 	}
 
+	
+	
 }

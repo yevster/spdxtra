@@ -2,6 +2,7 @@ package com.yevster.spdxtra;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -67,7 +68,8 @@ public class TestFileOperations {
 				Write.File.fileTypes(expectedFileUrl, FileType.OTHER, FileType.APPLICATION),
 				Write.File.concludedLicense(expectedFileUrl, License.NONE),
 				Write.File.checksums(expectedFileUrl, mockSha1, Checksum.md5(mockMd5)),
-				Write.File.licenseInfoInFile(expectedFileUrl, License.extracted(extractedLicense, baseUrl, "LicenseRef-el")),
+				Write.File.licenseInfoInFile(expectedFileUrl,
+						License.extracted(extractedLicense, baseUrl, "LicenseRef-el")),
 				Write.File.artifactOf(expectedFileUrl, artifactOfName, null));
 		reloadPackage();
 		List<SpdxFile> allFilesInPackage = pkg.getFiles().collect(Collectors.toList());
@@ -77,11 +79,15 @@ public class TestFileOperations {
 		assertEquals(expectedFileUrl, file.getUri());
 		assertEquals(fileName, file.getFileName());
 		assertEquals(Sets.newHashSet(FileType.OTHER, FileType.APPLICATION), file.getFileTypes());
-		assertEquals(AbsentValue.NONE.getUri(), file.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).get().getURI());
+		assertEquals(AbsentValue.NONE.getUri(),
+				file.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).get().getURI());
 		assertEquals(Sets.newHashSet(Checksum.md5(mockMd5), Checksum.sha1(mockSha1)), file.getChecksums());
 		// Test default copyright - NOASSERTION
 		assertEquals(SpdxUris.NO_ASSERTION, file.getCopyrightText().getLiteralOrUriValue());
 		assertEquals("Empty optional not returned for uninitialized comment", Optional.empty(), file.getComment());
+		assertEquals(Optional.empty(), file.getOptionalPropertyAsString(SpdxProperties.LICENSE_COMMENTS));
+		assertEquals(Optional.empty(), file.getNoticeText());
+		assertEquals(new HashSet<String>(), file.getContributors());
 
 		Resource doapProject = file.rdfResource.getProperty(SpdxProperties.ARTIFACT_OF).getObject().asResource();
 		Assert.assertEquals("When DOAP homepage not specified, should default to UNKNOWN.", "UNKNOWN",
@@ -89,17 +95,27 @@ public class TestFileOperations {
 		Assert.assertEquals(artifactOfName, doapProject.getProperty(SpdxProperties.DOAP_NAME).getString());
 
 		// Test overwrites
-		Write.applyUpdatesInOneTransaction(dataset, Write.File.checksums(file.getUri(), mockSha1, Checksum.sha256(mockSha256)),
+		Write.applyUpdatesInOneTransaction(dataset,
+				Write.File.checksums(file.getUri(), mockSha1, Checksum.sha256(mockSha256)),
 				Write.File.copyrightText(expectedFileUrl, NoneNoAssertionOrValue.of(copyrightText)),
-				Write.File.comment(file.getUri(), comment), Write.File.artifactOf(expectedFileUrl, artifactOfName, artifactOfHomepage));
+				Write.File.comment(file.getUri(), comment),
+				Write.File.artifactOf(expectedFileUrl, artifactOfName, artifactOfHomepage),
+				Write.File.licenseComments(expectedFileUrl, "Nice file license!"),
+				Write.File.noticeText(file.getUri(), "NOTICE THIS!"),
+				Write.File.contributors(file.getUri(), "Larry", "Curly", "Moe"));
 
 		// Reload
 		Resource fileResource = Read.lookupResourceByUri(dataset, expectedFileUrl).get();
 		file = new SpdxFile(fileResource);
 		assertEquals(Sets.newHashSet(Checksum.sha256(mockSha256), Checksum.sha1(mockSha1)), file.getChecksums());
-		assertEquals(baseUrl + "#LicenseRef-el", file.rdfResource.getPropertyResourceValue(SpdxProperties.LICENSE_INFO_IN_FILE).getURI());
+		assertEquals(baseUrl + "#LicenseRef-el",
+				file.rdfResource.getPropertyResourceValue(SpdxProperties.LICENSE_INFO_IN_FILE).getURI());
 		assertEquals(copyrightText, file.getCopyrightText().getValue().get());
 		assertEquals(comment, file.getComment().get());
+		assertEquals(Optional.of("Nice file license!"),
+				file.getOptionalPropertyAsString(SpdxProperties.LICENSE_COMMENTS));
+		assertEquals(Optional.of("NOTICE THIS!"), file.getNoticeText());
+		assertEquals(Sets.newHashSet("Larry", "Curly", "Moe"), file.getContributors());
 
 		List<Resource> doapProjects = MiscUtils.toLinearStream(fileResource.listProperties(SpdxProperties.ARTIFACT_OF))
 				.map(Statement::getObject).map(RDFNode::asResource).collect(Collectors.toList());
@@ -110,7 +126,8 @@ public class TestFileOperations {
 			Assert.assertNotNull(dp);
 			Assert.assertEquals(artifactOfName, dp.getProperty(SpdxProperties.DOAP_NAME).getString());
 			String actualHomepage = dp.getProperty(SpdxProperties.DOAP_HOMEPAGE).getString();
-			Assert.assertTrue("Homepage has an unexpected value: " + actualHomepage, expectedHomepages.remove(actualHomepage));
+			Assert.assertTrue("Homepage has an unexpected value: " + actualHomepage,
+					expectedHomepages.remove(actualHomepage));
 			Assert.assertEquals("Unexpected type for DOAP Project resource", "http://usefulinc.com/ns/doap#Project",
 					dp.getProperty(SpdxProperties.RDF_TYPE).getObject().asResource().getURI());
 		}
@@ -131,9 +148,12 @@ public class TestFileOperations {
 		assertEquals("http://spdx.org/rdf/terms#checksumAlgorithm_md5", Checksum.Algorithm.MD5.getUri());
 		assertEquals("http://spdx.org/rdf/terms#checksumAlgorithm_sha1", Checksum.Algorithm.SHA1.getUri());
 		assertEquals("http://spdx.org/rdf/terms#checksumAlgorithm_sha256", Checksum.Algorithm.SHA256.getUri());
-		assertEquals(Checksum.Algorithm.MD5, Checksum.Algorithm.fromUri("http://spdx.org/rdf/terms#checksumAlgorithm_md5"));
-		assertEquals(Checksum.Algorithm.SHA1, Checksum.Algorithm.fromUri("http://spdx.org/rdf/terms#checksumAlgorithm_sha1"));
-		assertEquals(Checksum.Algorithm.SHA256, Checksum.Algorithm.fromUri("http://spdx.org/rdf/terms#checksumAlgorithm_sha256"));
+		assertEquals(Checksum.Algorithm.MD5,
+				Checksum.Algorithm.fromUri("http://spdx.org/rdf/terms#checksumAlgorithm_md5"));
+		assertEquals(Checksum.Algorithm.SHA1,
+				Checksum.Algorithm.fromUri("http://spdx.org/rdf/terms#checksumAlgorithm_sha1"));
+		assertEquals(Checksum.Algorithm.SHA256,
+				Checksum.Algorithm.fromUri("http://spdx.org/rdf/terms#checksumAlgorithm_sha256"));
 
 	}
 

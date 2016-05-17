@@ -58,7 +58,8 @@ public final class Write {
 		 * @param spdxId
 		 * @return
 		 */
-		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator, Creator... additionalCreators) {
+		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator,
+				Creator... additionalCreators) {
 			// validation
 			if (!Validate.baseUrl(baseUrl)) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
@@ -77,7 +78,8 @@ public final class Write {
 				model.getGraph().getPrefixMapping().setNsPrefix("spdx", SpdxUris.SPDX_TERMS);
 				Resource newResource = model.createResource(uri, SpdxResourceTypes.DOCUMENT_TYPE);
 				newResource.addLiteral(SpdxProperties.SPDX_NAME, name);
-				newResource.addProperty(SpdxProperties.DATA_LICENSE, model.createResource("http://spdx.org/licenses/CC0-1.0"));
+				newResource.addProperty(SpdxProperties.DATA_LICENSE,
+						model.createResource("http://spdx.org/licenses/CC0-1.0"));
 				newResource.addProperty(SpdxProperties.SPEC_VERSION, Constants.DEFAULT_SPDX_VERSION);
 				Resource creationInfo = model.createResource(SpdxResourceTypes.CREATION_INFO_TYPE);
 				creationInfo.addProperty(SpdxProperties.CREATOR, creator.toString());
@@ -92,8 +94,8 @@ public final class Write {
 
 		}
 
-		public static ModelUpdate annotation(String baseUrl, String parentSpdxId, Type type, ZonedDateTime date, Creator annotator,
-				Optional<String> comment) {
+		public static ModelUpdate annotation(String baseUrl, String parentSpdxId, Type type, ZonedDateTime date,
+				Creator annotator, Optional<String> comment) {
 			// validation
 			if (!Validate.baseUrl(baseUrl)) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
@@ -110,11 +112,13 @@ public final class Write {
 				Resource parentResource = model.getResource(baseUrl + "#" + parentSpdxId);
 				if (parentResource.listProperties().toList().size() == 0) {
 					// Parent resource does not exist.
-					throw new IllegalArgumentException("Parent resource " + parentResource.getURI() + " does not exist.");
+					throw new IllegalArgumentException(
+							"Parent resource " + parentResource.getURI() + " does not exist.");
 				}
 
 				Resource newAnnotationResource = model.createResource(SpdxResourceTypes.ANNOTATION_TYPE);
-				newAnnotationResource.addLiteral(SpdxProperties.ANNOTATION_DATE, date.format(DateTimeFormatter.ISO_INSTANT));
+				newAnnotationResource.addLiteral(SpdxProperties.ANNOTATION_DATE,
+						date.format(DateTimeFormatter.ISO_INSTANT));
 				newAnnotationResource.addProperty(SpdxProperties.ANNOTATION_TYPE, type.getUri());
 				if (comment.isPresent()) {
 					newAnnotationResource.addLiteral(SpdxProperties.RDF_COMMENT, comment.get());
@@ -149,13 +153,14 @@ public final class Write {
 				Resource spdxPackageType = model.createResource(SpdxUris.SPDX_PACKAGE);
 				Resource newPackage = model.createResource(packageUri, spdxPackageType);
 				newPackage.addLiteral(SpdxProperties.SPDX_NAME, packageSpdxName);
-				newPackage.addLiteral(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION, NoneNoAssertionOrValue.AbsentValue.NOASSERTION.getUri());
+				newPackage.addLiteral(SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
+						NoneNoAssertionOrValue.AbsentValue.NOASSERTION.getUri());
 
 			};
 		}
 
-		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
-				final String packageSpdxName) {
+		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId,
+				String packageSpdxId, final String packageSpdxName) {
 
 			ModelUpdate createPackage = addPackage(documentBaseUrl, documentSpdxId, packageSpdxId, packageSpdxName);
 
@@ -164,8 +169,10 @@ public final class Write {
 
 			return (model) -> {
 				createPackage.apply(model);
-				Write.addRelationship(documentUri, packageUri, Optional.empty(), Relationship.Type.DESCRIBES).apply(model);
-				Write.addRelationship(packageUri, documentUri, Optional.empty(), Relationship.Type.DESCRIBED_BY).apply(model);
+				Write.addRelationship(documentUri, packageUri, Optional.empty(), Relationship.Type.DESCRIBES)
+						.apply(model);
+				Write.addRelationship(packageUri, documentUri, Optional.empty(), Relationship.Type.DESCRIBED_BY)
+						.apply(model);
 
 			};
 		}
@@ -189,7 +196,8 @@ public final class Write {
 		 * @param dateTime
 		 * @return
 		 */
-		public static ModelUpdate updateCreationDate(String documentBaseUrl, String documentSpdxId, ZonedDateTime dateTime) {
+		public static ModelUpdate updateCreationDate(String documentBaseUrl, String documentSpdxId,
+				ZonedDateTime dateTime) {
 			ZonedDateTime utcTime = dateTime.withZoneSameInstant(ZoneId.of("UTC"));
 			String newTimeToWrite = utcTime.format(Constants.SPDX_DATE_FORMATTER);
 			return (model) -> {
@@ -247,9 +255,23 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText) {
-			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT, copyrightText.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT,
+					copyrightText.getLiteralOrUriValue());
 		}
 
+		/**
+		 * Generates an update that adds a file with specified identifying
+		 * information to the package. Note: the arguments of this method do not
+		 * constitute the minimal necessary file information to produce a legal
+		 * SPDX document. It is recommended that other properties of the file be
+		 * set in the same transaction.
+		 * 
+		 * @param baseUrl
+		 * @param pkgSpidxId
+		 * @param fileSpdxId
+		 * @param newFileName
+		 * @return
+		 */
 		public static ModelUpdate addFile(String baseUrl, String pkgSpidxId, String fileSpdxId, String newFileName) {
 			return Write.addNewFileToElement(baseUrl, pkgSpidxId, fileSpdxId, newFileName);
 		}
@@ -261,7 +283,7 @@ public final class Write {
 		 * @param license
 		 * @return
 		 */
-		public static RdfResourceUpdate declaredLicense(SpdxPackage spdxPackage, final License license) {
+		public static ModelUpdate declaredLicense(SpdxPackage spdxPackage, final License license) {
 			return declaredLicense(spdxPackage.getUri(), license);
 		}
 
@@ -273,7 +295,8 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate declaredLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false, (m) -> license.getRdfNode(m));
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
+					(m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -283,7 +306,7 @@ public final class Write {
 		 * @param license
 		 * @return
 		 */
-		public static RdfResourceUpdate concludedLicense(SpdxPackage spdxPackage, final License license) {
+		public static ModelUpdate concludedLicense(SpdxPackage spdxPackage, final License license) {
 			return concludedLicense(spdxPackage.getUri(), license);
 		}
 
@@ -294,8 +317,16 @@ public final class Write {
 		 * @param license
 		 * @return
 		 */
-		public static RdfResourceUpdate concludedLicense(String packageUri, final License license) {
-			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false, (m) -> license.getRdfNode(m));
+		public static ModelUpdate concludedLicense(String packageUri, final License license) {
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false,
+					(m) -> license.getRdfNode(m));
+		}
+
+		/**
+		 * Generates an update for the package's license comments.
+		 */
+		public static ModelUpdate licenseComments(String packageUri, String licenseComment) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.LICENSE_COMMENTS, licenseComment);
 		}
 
 		/**
@@ -306,8 +337,9 @@ public final class Write {
 		 * @param newValue
 		 * @return
 		 */
-		public static RdfResourceUpdate filesAnalyzed(String packageUri, boolean newValue) {
-			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED, Boolean.toString(newValue));
+		public static ModelUpdate filesAnalyzed(String packageUri, boolean newValue) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED,
+					Boolean.toString(newValue));
 		}
 
 		/**
@@ -318,7 +350,7 @@ public final class Write {
 		 *            Must not be null, empty, or only whitespace.
 		 * @return
 		 */
-		public static RdfResourceUpdate packageFileName(String packageUri, String fileName) {
+		public static ModelUpdate packageFileName(String packageUri, String fileName) {
 			if (StringUtils.isBlank(fileName)) {
 				throw new IllegalArgumentException("File name must not be blank");
 			}
@@ -332,7 +364,8 @@ public final class Write {
 		 * @param downloadLocation
 		 * @return
 		 */
-		public static RdfResourceUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
+		public static RdfResourceUpdate packageDownloadLocation(String packageUri,
+				NoneNoAssertionOrValue downloadLocation) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
 					downloadLocation.getLiteralOrUriValue());
 		}
@@ -341,7 +374,39 @@ public final class Write {
 		 * Generates an update that sets the package's homepage
 		 */
 		public static RdfResourceUpdate homepage(String packageUri, NoneNoAssertionOrValue homepage) {
-			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE, homepage.getLiteralOrUriValue());
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE,
+					homepage.getLiteralOrUriValue());
+		}
+
+		/**
+		 * Generates an update that sets the package's summary description.
+		 */
+		public static ModelUpdate summary(String packageUri, String summary) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SUMMARY, summary);
+		}
+
+		/**
+		 * Generates an update that sets the package's detailed description.
+		 */
+		public static ModelUpdate description(String packageUri, String description) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.DESCRIPTION, description);
+		}
+
+		/**
+		 * Generates an update that sets the value of the source information
+		 * field, used to "provide additional information to describe any
+		 * anomalies or discoveries in the determination of the origin of the
+		 * package."
+		 */
+		public static ModelUpdate sourceInfo(String packageUri, String sourceInfo) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SOURCE_INFO, sourceInfo);
+		}
+
+		/**
+		 * Generates an update that sets the package comment.
+		 */
+		public static ModelUpdate comment(String packageUri, String comment) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.RDF_COMMENT, comment);
 		}
 
 		/**
@@ -380,9 +445,11 @@ public final class Write {
 						.map(Statement::getObject).map(RDFNode::asResource)
 						// Remove the non-Sha-1 checksums
 						.filter(checksum -> StringUtils.equals(Checksum.Algorithm.SHA1.getUri(),
-								checksum.getProperty(SpdxProperties.CHECKSUM_ALGORITHM).getObject().asResource().getURI()))
+								checksum.getProperty(SpdxProperties.CHECKSUM_ALGORITHM).getObject().asResource()
+										.getURI()))
 						// Get the sha1 digests
-						.map(checksum -> checksum.getProperty(SpdxProperties.CHECKSUM_VALUE).getObject().asLiteral().getString())
+						.map(checksum -> checksum.getProperty(SpdxProperties.CHECKSUM_VALUE).getObject().asLiteral()
+								.getString())
 						// Concatenate the SHA1 digests
 						.collect(Collectors.joining());
 				String verificationCode = DigestUtils.shaHex(concatenatedSha1);
@@ -421,6 +488,13 @@ public final class Write {
 		}
 
 		/**
+		 * Generates an update for the file's license comments.
+		 */
+		public static ModelUpdate licenseComments(String fileUri, String licenseComment) {
+			return RdfResourceUpdate.updateStringProperty(fileUri, SpdxProperties.LICENSE_COMMENTS, licenseComment);
+		}
+
+		/**
 		 * Generates an update to set the file's copyright text
 		 * 
 		 * @param fileUri
@@ -440,7 +514,8 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate comment(String uri, String commentText) {
-			return new RdfResourceUpdate(uri, SpdxProperties.RDF_COMMENT, false, (m) -> ResourceFactory.createPlainLiteral(commentText));
+			return new RdfResourceUpdate(uri, SpdxProperties.RDF_COMMENT, false,
+					(m) -> ResourceFactory.createPlainLiteral(commentText));
 		}
 
 		/**
@@ -453,7 +528,8 @@ public final class Write {
 
 			return new RdfResourceUpdate(fileUri, SpdxProperties.ARTIFACT_OF, true, (m) -> {
 				Resource doapProject = m.createResource(SpdxResourceTypes.DOAP_PROJECT);
-				doapProject.addProperty(SpdxProperties.DOAP_HOMEPAGE, StringUtils.isBlank(projectHomepage) ? "UNKNOWN" : projectHomepage);
+				doapProject.addProperty(SpdxProperties.DOAP_HOMEPAGE,
+						StringUtils.isBlank(projectHomepage) ? "UNKNOWN" : projectHomepage);
 				doapProject.addProperty(SpdxProperties.DOAP_NAME, projectName);
 				return doapProject;
 			});
@@ -467,7 +543,8 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate licenseInfoInFile(String fileUri, final License license) {
-			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false, (Model m) -> license.getRdfNode(m));
+			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false,
+					(Model m) -> license.getRdfNode(m));
 		}
 
 		/**
@@ -502,6 +579,32 @@ public final class Write {
 				file.addProperty(SpdxProperties.CHECKSUM, Checksum.sha1(sha1).asResource(m));
 				for (Checksum checksum : others) {
 					file.addProperty(SpdxProperties.CHECKSUM, checksum.asResource(m));
+				}
+			};
+		}
+
+		/**
+		 * Generates an update that sets this file's notice text.
+		 */
+		public static ModelUpdate noticeText(String fileUri, String noticeText) {
+			return RdfResourceUpdate.updateStringProperty(fileUri, SpdxProperties.NOTICE_TEXT, noticeText);
+		}
+
+		/**
+		 * Generates an update that sets this files contributors. Any
+		 * contributors previously set on this file will be replaced with the
+		 * provided values when the update is applied.
+		 * 
+		 * @param fileUri
+		 * @param contributors
+		 * @return
+		 */
+		public static ModelUpdate contributors(String fileUri, String... contributors){
+			return (m)->{
+				Resource file = m.getResource(fileUri);
+				file.removeAll(SpdxProperties.FILE_CONTRIBUTOR);
+				for (String contributor : contributors){
+					file.addProperty(SpdxProperties.FILE_CONTRIBUTOR, contributor);
 				}
 			};
 		}
@@ -580,8 +683,8 @@ public final class Write {
 
 	}
 
-	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target, final Optional<String> comment,
-			final Relationship.Type type) {
+	public static RdfResourceUpdate addRelationship(SpdxElement source, SpdxElement target,
+			final Optional<String> comment, final Relationship.Type type) {
 		return addRelationship(source.getUri(), target.getUri(), comment, type);
 	}
 
@@ -608,7 +711,8 @@ public final class Write {
 	 * @param newFileName
 	 * @return
 	 */
-	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId, String newFileName) {
+	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId,
+			String newFileName) {
 		final String parentUri = baseUrl + '#' + parentSpdxId;
 		final String fileUri = baseUrl + '#' + newFileSpdxId;
 
@@ -624,7 +728,8 @@ public final class Write {
 						"File already exists. Adding existing files is currently unsupported.  " + newFileName);
 			}
 			newFileResource.addLiteral(SpdxProperties.FILE_NAME, newFileName);
-			newFileResource.addProperty(SpdxProperties.COPYRIGHT_TEXT, NoneNoAssertionOrValue.NO_ASSERTION.getLiteralOrUriValue());
+			newFileResource.addProperty(SpdxProperties.COPYRIGHT_TEXT,
+					NoneNoAssertionOrValue.NO_ASSERTION.getLiteralOrUriValue());
 			Resource parentResource = model.createResource(parentUri);
 			if (!parentResource.listProperties().hasNext()) { // Parent doesn't
 																// exist.

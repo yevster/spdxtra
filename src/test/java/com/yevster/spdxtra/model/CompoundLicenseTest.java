@@ -79,7 +79,6 @@ public class CompoundLicenseTest {
 		Write.applyUpdatesInOneTransaction(dataset, Write.Package.declaredLicense(pkg, disjunctiveLicense),
 				Write.Package.concludedLicense(pkg, conjunctiveLicense));
 
-		dataset.getDefaultModel().write(System.out);
 	}
 
 	@Test
