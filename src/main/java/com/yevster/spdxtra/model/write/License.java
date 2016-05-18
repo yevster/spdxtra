@@ -1,5 +1,7 @@
 package com.yevster.spdxtra.model.write;
 
+import java.util.Optional;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
@@ -9,6 +11,7 @@ import org.apache.jena.rdf.model.impl.PropertyImpl;
 
 import com.yevster.spdxtra.SpdxProperties;
 import com.yevster.spdxtra.SpdxUris;
+import com.yevster.spdxtra.util.MiscUtils;
 
 public abstract class License {
 	private static class SingleUriLicense extends License {
@@ -70,22 +73,35 @@ public abstract class License {
 	/**
 	 * Returns a license with the specified text and the specified ID.
 	 * 
-	 * @param text
-	 * @param baseUrl
-	 * @param spdxId
+	 * @param text License text
+	 * @param name License name
+	 * @param baseUrl The base URI of the containing document
+	 * @param spdxId A unique SPDX ID of the license in the form "LicenseRef-*".
 	 * @return
 	 */
-	public static License extracted(String text, String baseUrl, String spdxId) {
-		return new ExtractedLicense(text, baseUrl, spdxId);
+	public static License extracted(String text, String name, String baseUrl, String spdxId) {
+		return extracted(text, name, baseUrl, spdxId, null);
 	}
+	
+	/**
+	 * Returns a license with the specified text and the specified ID.
+	 * 
+	 * @param text License text
+	 * @param name License name
+	 * @param baseUrl The base URI of the containing document
+	 * @param spdxId A unique SPDX ID of the license in the form "LicenseRef-*".
+	 * @param comment A comment to be stored inside the license. 
+	 * @return
+	 */
+	public static License extracted(String text, String name, String baseUrl, String spdxId, String comment){
+		return new ExtractedLicense(text, name, baseUrl, spdxId, MiscUtils.optionalOfBlankable(comment));
+	}
+	
+	
 
 	public static final License NOASSERTION = new SingleUriLicense(SpdxUris.NO_ASSERTION);
 	public static final License NONE = new SingleUriLicense(SpdxUris.NONE);
 
-	// Not all licenses have these property - conjunctive/disjunctive ones
-	// don't.
-	protected static final Property licenseNameProperty = new PropertyImpl(SpdxUris.SPDX_TERMS, "name");
-	protected static final Property licenseIdProperty = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseId");
 
 	public abstract RDFNode getRdfNode(Model m);
 
