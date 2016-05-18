@@ -65,7 +65,9 @@ public class TestDocumentOperations {
 
 		Set<String> expectedCreators = ImmutableSet.of("Person: Albert Einstein (aEinstein@princeton.edu)", "Tool: SpdXtra",
 				"Organization: Aperture Science, LLC. ()");
-		assertEquals("Unexpected creator info", 0, Sets.symmetricDifference(expectedCreators, creatorStrings).size());
+		assertEquals("Unexpected creator info", new HashSet<String>(), Sets.symmetricDifference(expectedCreators, creatorStrings));
+		//Try the document accessor
+		assertEquals("Unexpected creator info", new HashSet<String>(), Sets.symmetricDifference(expectedCreators, document.getCreationInfo().getCreators()));
 
 	}
 

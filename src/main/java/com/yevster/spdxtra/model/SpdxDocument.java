@@ -3,16 +3,23 @@ package com.yevster.spdxtra.model;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 import com.yevster.spdxtra.Constants;
 import com.yevster.spdxtra.RdfResourceRepresentation;
 import com.yevster.spdxtra.RdfResourceUpdate;
 import com.yevster.spdxtra.SpdxProperties;
 import com.yevster.spdxtra.SpdxUris;
+import com.yevster.spdxtra.util.MiscUtils;
 
 /**
  * Describes an SPDX document.
@@ -39,6 +46,20 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 		 */
 		public Optional<String> getComment(){
 			return getOptionalPropertyAsString(SpdxProperties.RDF_COMMENT);
+		}
+		
+		/**
+		 * Gets the creators of the SPDX document, such as:
+		 * Person: Joe Smith (jsmith@example.org)
+		 */
+		public Set<String> getCreators(){
+			return Collections.unmodifiableSet(
+				MiscUtils.toLinearStream(rdfResource.listProperties(SpdxProperties.CREATOR))
+				.map(Statement::getObject)
+				.map(RDFNode::asLiteral)
+				.map(Literal::getString)
+				.collect(Collectors.toSet())
+					);
 		}
 	}
 
@@ -72,10 +93,14 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 	}
 
 
+	/**
+	 * Returns the creation information of the document.
+	 */
 	public CreationInfo getCreationInfo(){
 		return new CreationInfo(getPropertyAsResource(SpdxProperties.CREATION_INFO).get());
 	}
 
+	
 	
 
 	
