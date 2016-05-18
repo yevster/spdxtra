@@ -3,6 +3,7 @@ package com.yevster.spdxtra.model;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Resource;
@@ -24,6 +25,21 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 		CreationInfo(Resource r) {
 			super(r);
 		}
+		
+		/**
+		 * Returns the UTC creation date time.
+		 */
+		public ZonedDateTime getCreationDate(){
+			String creationDate = rdfResource.getProperty(SpdxProperties.CREATION_DATE).getString();
+			return ZonedDateTime.of(LocalDateTime.parse(creationDate, Constants.SPDX_DATE_FORMATTER), ZoneId.of("UTC"));
+		}
+		
+		/**
+		 * Returns the creation comment
+		 */
+		public Optional<String> getComment(){
+			return getOptionalPropertyAsString(SpdxProperties.RDF_COMMENT);
+		}
 	}
 
 	public SpdxDocument(Resource resource) {
@@ -37,6 +53,14 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 	public String getDocumentNamespace() {
 		return StringUtils.substringBeforeLast(getUri(), "#");
 	}
+	
+	/**
+	 * Returns the document comment
+	 * @return
+	 */
+	public Optional<String> getComment(){
+		return getOptionalPropertyAsString(SpdxProperties.RDF_COMMENT);
+	}
 
 	/**
 	 * Returns the version of the SPDX specification used to build the document.
@@ -47,23 +71,14 @@ public class SpdxDocument extends SpdxElement implements SpdxIdentifiable {
 		return getPropertyAsString(SpdxProperties.SPEC_VERSION);
 	}
 
-	/**
-	 * Returns the creation time of the document as recorded in the document.
-	 * 
-	 * @return
-	 */
-	public ZonedDateTime getCreationTime() {
-		// All these fields are mandatory.
-		Resource creationInfo = getPropertyAsResource(SpdxProperties.CREATION_INFO).get();
-		String creationDate = creationInfo.getProperty(SpdxProperties.CREATION_DATE).getString();
-		return ZonedDateTime.of(LocalDateTime.parse(creationDate, Constants.SPDX_DATE_FORMATTER), ZoneId.of("UTC"));
+
+	public CreationInfo getCreationInfo(){
+		return new CreationInfo(getPropertyAsResource(SpdxProperties.CREATION_INFO).get());
 	}
 
-	/* UPDATE GENERATORS */
-	public static RdfResourceUpdate setName(SpdxDocument doc, String name) {
-		return RdfResourceUpdate.updateStringProperty(doc.getUri(), SpdxProperties.SPDX_NAME, name);
-	}
+	
 
+	
 	/* Addition generators */
 
 }

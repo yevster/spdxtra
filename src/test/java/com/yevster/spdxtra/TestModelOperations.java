@@ -87,10 +87,11 @@ public class TestModelOperations {
 				describesRelationship.toString());
 
 		// Verify the date
-		ZonedDateTime creationTime = doc.getCreationTime();
+		ZonedDateTime creationTime = doc.getCreationInfo().getCreationDate();
 		ZonedDateTime expectedCreationTime = ZonedDateTime.of(LocalDateTime.of(2015, 8, 3, 21, 38, 16),
 				ZoneId.of("UTC"));
 		assertEquals(expectedCreationTime, creationTime);
+		assertEquals(Optional.of("Created for Linux Con. SPDX Bakeoff 2015"), doc.getCreationInfo().getComment());
 
 		// Make sure we don't create a new object each time we call
 		// getRelatedElement().

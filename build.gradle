@@ -7,7 +7,7 @@ plugins {
 
 group 'com.yevster'
 
-version '0.4-SNAPSHOT'
+version '0.5-SNAPSHOT'
 mainClassName = 'com.yevster.spdxtra.cli.CommandLineTool'
 
 sourceCompatibility = 1.8

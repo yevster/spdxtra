@@ -37,7 +37,8 @@ public class TestDocumentOperations {
 				Creator.organization("Aperture Science, LLC.", Optional.empty()));
 
 		assertNotNull(creation);
-		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(creation));
+		Write.applyUpdatesInOneTransaction(dataset, creation, Write.Document.comment(baseUrl, id, "Doc comment"),
+				Write.Document.creationComment(baseUrl, id, "Creation comment"));
 
 		SpdxDocument document = Read.Document.get(dataset);
 
@@ -46,9 +47,11 @@ public class TestDocumentOperations {
 		assertEquals(id, document.getSpdxId());
 		assertEquals(name, document.getName());
 		assertEquals(Constants.DEFAULT_SPDX_VERSION, document.getSpecVersion());
+		assertEquals(Optional.of("Doc comment"), document.getComment());
+		assertEquals(Optional.of("Creation comment"), document.getCreationInfo().getComment());
 
 		// Verify creation date/time
-		ZonedDateTime creationDateTime = document.getCreationTime();
+		ZonedDateTime creationDateTime = document.getCreationInfo().getCreationDate();
 		assertNotNull(creationDateTime);
 		assertTrue(creationDateTime.isAfter(ZonedDateTime.now().minusHours(1)));
 
@@ -74,11 +77,11 @@ public class TestDocumentOperations {
 		// Expect the date to be stored in UTC, without nanoseconds.
 		ZonedDateTime expectedCreationDate = ZonedDateTime.of(1976, 7, 4, 13, 1, 2, 0, ZoneId.of("UTC"));
 
-		ModelUpdate update = Write.Document.updateCreationDate(document, newCreationDate);
+		ModelUpdate update = Write.Document.creationDate(document, newCreationDate);
 		Write.applyUpdatesInOneTransaction(dataset, ImmutableList.of(update));
 
 		document = Read.Document.get(dataset);
-		assertEquals(expectedCreationDate, document.getCreationTime());
+		assertEquals(expectedCreationDate, document.getCreationInfo().getCreationDate());
 
 	}
 
@@ -93,7 +96,6 @@ public class TestDocumentOperations {
 				Write.Document.specVersion(baseUrl, spdxId, "666. Yep, you're doomed. DOOOOOMED!"));
 		SpdxDocument document = Read.Document.get(dataset);
 		assertEquals("666. Yep, you're doomed. DOOOOOMED!", document.getSpecVersion());
-		
 
 	}
 
