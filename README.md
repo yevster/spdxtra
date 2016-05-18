@@ -2,7 +2,7 @@
 
 [ ![Download](https://api.bintray.com/packages/yevster/maven/SpdXtra/images/download.svg) ](https://bintray.com/yevster/maven/SpdXtra/_latestVersion)
 [![Build Status](https://travis-ci.org/yevster/spdxtra.svg?branch=master)](https://travis-ci.org/yevster/spdxtra)
-[![Coverage Status](https://coveralls.io/repos/github/yevster/spdxtra/badge.png?branch=master)](https://coveralls.io/github/yevster/spdxtra?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/yevster/spdxtra/badge.svg?branch=master)](https://coveralls.io/github/yevster/spdxtra?branch=master)
 
 ##Project Description
 
