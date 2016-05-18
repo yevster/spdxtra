@@ -294,7 +294,7 @@ public final class Write {
 		 * more values.
 		 */
 		public static ModelUpdate checksums(String packageUri, String sha1, Checksum... others) {
-			//Already implemented in files, with no differences in logic
+			// Already implemented in files, with no differences in logic
 			return File.checksums(packageUri, sha1, others);
 		}
 
@@ -417,6 +417,13 @@ public final class Write {
 		 */
 		public static ModelUpdate originator(String packageUri, HumanCreator originator) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.ORIGINATOR, originator.toString());
+		}
+
+		/**
+		 * Generates an update that adds another value of the "License Information from Files" property to any values that may have been previously specified.
+		 */
+		public static ModelUpdate addLicenseInfoFromFiles(String packageUri, License license){
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_INFO_FROM_FILES, true, license::getRdfNode);
 		}
 
 		/**

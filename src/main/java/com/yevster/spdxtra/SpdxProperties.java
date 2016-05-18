@@ -25,6 +25,7 @@ public final class SpdxProperties {
 	public static final Property PACKAGE_FILE_NAME = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageFileName");
 	public static final Property PACKAGE_VERIFICATION_CODE = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageVerificationCode");
 	public static final Property PACKAGE_VERIFICATION_CODE_VALUE = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageVerificationCodeValue");
+	public static final Property LICENSE_INFO_FROM_FILES = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseInfoFromFiles");
 	public static final Property FILES_ANALYZED = new PropertyImpl(SpdxUris.SPDX_TERMS, "filesAnalyzed");
 	public static final Property HOMEPAGE = new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "homepage");
 	public static final Property SUMMARY = new PropertyImpl(SpdxUris.SPDX_TERMS, "summary");
