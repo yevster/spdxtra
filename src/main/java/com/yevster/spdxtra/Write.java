@@ -49,6 +49,11 @@ public final class Write {
 	public static interface ModelUpdate {
 		void apply(Model model);
 	}
+	
+	/**
+	 * An model update that doesn't do anything.
+	 */
+	public static final ModelUpdate NOTHING = (m)->{};
 
 	public static final class New {
 		/**
