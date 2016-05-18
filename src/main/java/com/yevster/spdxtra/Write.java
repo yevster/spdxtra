@@ -50,11 +50,12 @@ public final class Write {
 	public static interface ModelUpdate {
 		void apply(Model model);
 	}
-	
+
 	/**
 	 * An model update that doesn't do anything.
 	 */
-	public static final ModelUpdate NOTHING = (m)->{};
+	public static final ModelUpdate NOTHING = (m) -> {
+	};
 
 	public static final class New {
 		/**
@@ -289,6 +290,15 @@ public final class Write {
 		}
 
 		/**
+		 * Generates an update for the packages checksum property, with one or
+		 * more values.
+		 */
+		public static ModelUpdate checksums(String packageUri, String sha1, Checksum... others) {
+			//Already implemented in files, with no differences in logic
+			return File.checksums(packageUri, sha1, others);
+		}
+
+		/**
 		 * Generates an update that adds a file with specified identifying
 		 * information to the package. Note: the arguments of this method do not
 		 * constitute the minimal necessary file information to produce a legal
@@ -398,17 +408,17 @@ public final class Write {
 		/**
 		 * Generates an update that sets the package's supplier.
 		 */
-		public static ModelUpdate supplier(String packageUri, HumanCreator supplier){
+		public static ModelUpdate supplier(String packageUri, HumanCreator supplier) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SUPPLIER, supplier.toString());
 		}
-		
+
 		/**
 		 * Generates an update that sets the package's originator.
 		 */
-		public static ModelUpdate originator(String packageUri, HumanCreator originator){
+		public static ModelUpdate originator(String packageUri, HumanCreator originator) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.ORIGINATOR, originator.toString());
 		}
-		
+
 		/**
 		 * Generates an update that sets the package's homepage
 		 */
