@@ -107,6 +107,20 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 	public Optional<String> getComment(){
 		return getOptionalPropertyAsString(SpdxProperties.RDF_COMMENT);
 	}
+	
+	/**
+	 * Returns the package's supplier (if present)
+	 */
+	public Optional<String> getSupplier(){
+		return getOptionalPropertyAsString(SpdxProperties.SUPPLIER);
+	}
+	
+	/**
+	 * Returns the package's originator (if present)
+	 */
+	public Optional<String> getOriginator(){
+		return getOptionalPropertyAsString(SpdxProperties.ORIGINATOR);
+	}
 
 	@Override
 	public String toString() {

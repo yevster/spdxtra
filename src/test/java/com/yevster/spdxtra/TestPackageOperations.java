@@ -23,6 +23,7 @@ import com.yevster.spdxtra.Read.Document;
 import com.yevster.spdxtra.Read.Package;
 import com.yevster.spdxtra.Write.ModelUpdate;
 import com.yevster.spdxtra.model.Creator;
+import com.yevster.spdxtra.model.Creator.HumanCreator;
 import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxDocument;
 import com.yevster.spdxtra.model.SpdxFile;
@@ -76,6 +77,8 @@ public class TestPackageOperations {
 		updates.add(Write.Package.filesAnalyzed(pkg.getUri(), false));
 		updates.add(Write.Package.licenseComments(pkg.getUri(), "Nice license!"));
 		updates.add(Write.Package.comment(pkg.getUri(), "Package comment, yeeeah!"));
+		updates.add(Write.Package.supplier(pkg.getUri(), Creator.organization("Evil, Inc.",Optional.empty())));
+		updates.add(Write.Package.originator(pkg.getUri(), Creator.person("Orey Ginator", Optional.of("oreyg@example.com"))));
 		updates.add(update);
 
 		final String packageDownloadLocation = "git+https://git.myproject.org/MyProject.git@v10.0#src/lib.c";
@@ -112,6 +115,8 @@ public class TestPackageOperations {
 		assertEquals(Optional.of(summary), pkg.getSummary());
 		assertEquals(Optional.of(sourceInfo), pkg.getSourceInfo());
 		assertEquals(Optional.of("Package comment, yeeeah!"), pkg.getComment());
+		assertEquals(Optional.of("Organization: Evil, Inc. ()"), pkg.getSupplier());
+		assertEquals(Optional.of("Person: Orey Ginator (oreyg@example.com)"), pkg.getOriginator());
 	}
 
 	@Test

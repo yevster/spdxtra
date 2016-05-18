@@ -32,6 +32,7 @@ import org.apache.jena.tdb.TDBFactory;
 
 import com.google.common.collect.Ordering;
 import com.yevster.spdxtra.model.Annotation.Type;
+import com.yevster.spdxtra.model.Creator.HumanCreator;
 import com.yevster.spdxtra.model.Checksum;
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.FileType;
@@ -383,17 +384,31 @@ public final class Write {
 		}
 
 		/**
-		 * Sets the package's download location.
+		 * Generates an update that sets the package's download location.
 		 *
 		 * @param packageUri
 		 * @param downloadLocation
 		 * @return
 		 */
-		public static RdfResourceUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
+		public static ModelUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
 					downloadLocation.getLiteralOrUriValue());
 		}
 
+		/**
+		 * Generates an update that sets the package's supplier.
+		 */
+		public static ModelUpdate supplier(String packageUri, HumanCreator supplier){
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SUPPLIER, supplier.toString());
+		}
+		
+		/**
+		 * Generates an update that sets the package's originator.
+		 */
+		public static ModelUpdate originator(String packageUri, HumanCreator originator){
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.ORIGINATOR, originator.toString());
+		}
+		
 		/**
 		 * Generates an update that sets the package's homepage
 		 */

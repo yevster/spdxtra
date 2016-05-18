@@ -30,6 +30,8 @@ public final class SpdxProperties {
 	public static final Property SUMMARY = new PropertyImpl(SpdxUris.SPDX_TERMS, "summary");
 	public static final Property DESCRIPTION = new PropertyImpl(SpdxUris.SPDX_TERMS, "description");
 	public static final Property SOURCE_INFO = new PropertyImpl(SpdxUris.SPDX_TERMS, "sourceInfo");
+	public static final Property ORIGINATOR = new PropertyImpl(SpdxUris.SPDX_TERMS, "originator");
+	public static final Property SUPPLIER = new PropertyImpl(SpdxUris.SPDX_TERMS, "supplier");
 
 	// FILE PROPERTIES
 	public static final Property HAS_FILE = new PropertyImpl(SpdxUris.SPDX_TERMS, "hasFile");
