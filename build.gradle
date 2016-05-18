@@ -3,6 +3,8 @@ plugins {
     id 'application'
     id 'com.github.johnrengelman.shadow' version '1.2.3'
     id 'maven'
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.6.3'
 }
 
 group 'com.yevster'
@@ -59,3 +61,4 @@ task writeNewPom << {
         }
     }.writeTo("$buildDir/spdxtra-${version}.pom")
 }
+
