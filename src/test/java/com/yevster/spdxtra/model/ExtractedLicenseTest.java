@@ -39,32 +39,37 @@ public class ExtractedLicenseTest {
 		this.dataset = DatasetFactory.createTxnMem();
 
 		List<ModelUpdate> updates = new LinkedList<>();
-		updates.add(Write.New.document(documentNamespace, documentSpdxId, "El documento fantastico!",
-				Creator.tool("Testy McTestface")));
+		updates.add(Write.New.document(documentNamespace, documentSpdxId, "El documento fantastico!", Creator.tool("Testy McTestface")));
 		updates.add(Write.Document.addDescribedPackage(documentNamespace, documentSpdxId, pkgSpdxId, "Good things"));
 		Write.applyUpdatesInOneTransaction(dataset, updates);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testCreateIllegalText() {
-		License.extracted("   \n", "http://foo", "bar");
+		License.extracted("   \n", "namey", "http://foo", "bar");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testCreateIllegalSpdxId() {
-		License.extracted("This is my license. Enjoy.", "http://foo", "");
+		License.extracted("This is my license. Enjoy.", "namey", "http://foo", "");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testCreateIllegalBaseUrl() {
-		License.extracted("This is my license. Enjoy.", "http://foo#", "bar");
+		License.extracted("This is my license. Enjoy.", "namey", "http://foo#", "bar");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testCreateIllegalName() {
+		License.extracted("This is my license. Enjoy.", "  \n", "http://foo#", "bar");
 	}
 
 	@Test
 	public void testAssignExtracted() {
-		String licenseText = "this is my license.\nCopyright(c) 2016 Awesome Corporation of Awesomness, Inc. Ltd. Bbc. Ddt.";
+		final String licenseText = "this is my license.\nCopyright(c) 2016 Awesome Corporation of Awesomness, Inc. Ltd. Bbc. Ddt.";
+		final String licenseName = "namey";
 		String spdxId = "LicenseRef-141";
-		License extractedLicense = License.extracted(licenseText, documentNamespace, spdxId);
+		License extractedLicense = License.extracted(licenseText, licenseName, documentNamespace, spdxId);
 		assertNotNull(extractedLicense);
 
 		// We're going to apply the update twice, to make sure the second time
@@ -74,16 +79,16 @@ public class ExtractedLicenseTest {
 			Write.applyUpdatesInOneTransaction(dataset, Write.Package.declaredLicense(pkgUri, extractedLicense));
 
 			Resource pkgResource = Read.lookupResourceByUri(dataset, pkgUri).get();
-			Resource licenseResource = pkgResource.getProperty(SpdxProperties.LICENSE_DECLARED).getObject()
-					.asResource();
+			Resource licenseResource = pkgResource.getProperty(SpdxProperties.LICENSE_DECLARED).getObject().asResource();
 
 			assertEquals(documentNamespace + "#" + spdxId, licenseResource.getURI());
-			Stream<Statement> rdfProps = MiscUtils
-					.toLinearStream(licenseResource.listProperties(SpdxProperties.LICENSE_ID));
-			assertEquals(Sets.newHashSet(spdxId),
-					rdfProps.map(Statement::getObject).map(Object::toString).collect(Collectors.toSet()));
+			Stream<Statement> rdfProps = MiscUtils.toLinearStream(licenseResource.listProperties(SpdxProperties.LICENSE_ID));
+			assertEquals(Sets.newHashSet(spdxId), rdfProps.map(Statement::getObject).map(Object::toString).collect(Collectors.toSet()));
 			rdfProps = MiscUtils.toLinearStream(licenseResource.listProperties(SpdxProperties.LICENSE_EXTRACTED_TEXT));
 			assertEquals(Sets.newHashSet(licenseText),
+					rdfProps.map(Statement::getObject).map(Object::toString).collect(Collectors.toSet()));
+			rdfProps = MiscUtils.toLinearStream(licenseResource.listProperties(SpdxProperties.NAME));
+			assertEquals(Sets.newHashSet(licenseName),
 					rdfProps.map(Statement::getObject).map(Object::toString).collect(Collectors.toSet()));
 
 		}

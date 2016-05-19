@@ -1,7 +1,10 @@
 package com.yevster.spdxtra.model.write;
 
+import java.util.Optional;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -18,6 +21,7 @@ import com.yevster.spdxtra.Validate;
  *
  */
 class ExtractedLicense extends License {
+
 	private static final Resource extractedLicenseType = ResourceFactory.createResource(SpdxUris.SPDX_TERMS + "ExtractedLicensingInfo");
 
 	private String text;
@@ -25,8 +29,12 @@ class ExtractedLicense extends License {
 	private String spdxId;
 
 	private String baseUrl;
+	
+	private String name;
 
-	public ExtractedLicense(String text, String baseUrl, String spdxId) {
+	private Optional<String> comment;
+	
+	public ExtractedLicense(String text, String name, String baseUrl, String spdxId, Optional<String> comment) {
 		if (!Validate.spdxLicenseId(spdxId))
 			throw new IllegalArgumentException("Illegal SPDX ID " + spdxId);
 		if (!Validate.baseUrl(baseUrl)) {
@@ -37,6 +45,9 @@ class ExtractedLicense extends License {
 		this.spdxId = spdxId;
 		this.text = text;
 		this.baseUrl = baseUrl;
+		this.name = name;
+		this.comment = comment;
+		
 	}
 
 	@Override
@@ -51,6 +62,10 @@ class ExtractedLicense extends License {
 		}
 		resource.addLiteral(SpdxProperties.LICENSE_ID, spdxId);
 		resource.addLiteral(SpdxProperties.LICENSE_EXTRACTED_TEXT, text);
+		resource.addLiteral(SpdxProperties.NAME, name);
+		if (comment.isPresent()){
+			resource.addLiteral(SpdxProperties.RDF_COMMENT, comment.get());
+		}
 		return resource;
 	}
 }

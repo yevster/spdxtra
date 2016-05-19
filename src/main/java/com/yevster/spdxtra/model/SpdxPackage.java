@@ -11,7 +11,10 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
@@ -107,6 +110,20 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 	public Optional<String> getComment(){
 		return getOptionalPropertyAsString(SpdxProperties.RDF_COMMENT);
 	}
+	
+	/**
+	 * Returns the package's supplier (if present)
+	 */
+	public Optional<String> getSupplier(){
+		return getOptionalPropertyAsString(SpdxProperties.SUPPLIER);
+	}
+	
+	/**
+	 * Returns the package's originator (if present)
+	 */
+	public Optional<String> getOriginator(){
+		return getOptionalPropertyAsString(SpdxProperties.ORIGINATOR);
+	}
 
 	@Override
 	public String toString() {
@@ -118,6 +135,20 @@ public class SpdxPackage extends SpdxElement implements SpdxIdentifiable {
 		Stream<Statement> fileStatementStream = MiscUtils.toLinearStream(this.rdfResource.listProperties(SpdxProperties.HAS_FILE));
 		return fileStatementStream.map(Statement::getObject).map(RDFNode::asResource).map((r) -> new SpdxFile(r));
 	}
+	
+	/**
+	 * Returns the set of package checksums or empty set if none are declared.
+	 * @return
+	 */
+	public Set<Checksum> getChecksums() {
+		Set<Checksum> result = 
+				MiscUtils.toLinearStream(this.rdfResource.listProperties(SpdxProperties.CHECKSUM))
+						.map(Statement::getResource)
+						.map(Checksum::fromResource)
+						.collect(Collectors.toSet());
+		return Collections.unmodifiableSet(result);
+	}
+	
 
 	/**
 	 * Returns the package verification code, if one is present (i.e.

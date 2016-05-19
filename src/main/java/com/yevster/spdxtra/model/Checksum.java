@@ -50,7 +50,7 @@ public final class Checksum {
 
 	private Algorithm algorithm;
 	private String digest;
-
+ 
 	private Checksum(Algorithm algorithm, String digest) {
 		this.algorithm = algorithm;
 		this.digest = digest;

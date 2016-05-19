@@ -25,11 +25,14 @@ public final class SpdxProperties {
 	public static final Property PACKAGE_FILE_NAME = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageFileName");
 	public static final Property PACKAGE_VERIFICATION_CODE = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageVerificationCode");
 	public static final Property PACKAGE_VERIFICATION_CODE_VALUE = new PropertyImpl(SpdxUris.SPDX_TERMS, "packageVerificationCodeValue");
+	public static final Property LICENSE_INFO_FROM_FILES = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseInfoFromFiles");
 	public static final Property FILES_ANALYZED = new PropertyImpl(SpdxUris.SPDX_TERMS, "filesAnalyzed");
 	public static final Property HOMEPAGE = new PropertyImpl(SpdxUris.DOAP_NAMESPACE, "homepage");
 	public static final Property SUMMARY = new PropertyImpl(SpdxUris.SPDX_TERMS, "summary");
 	public static final Property DESCRIPTION = new PropertyImpl(SpdxUris.SPDX_TERMS, "description");
 	public static final Property SOURCE_INFO = new PropertyImpl(SpdxUris.SPDX_TERMS, "sourceInfo");
+	public static final Property ORIGINATOR = new PropertyImpl(SpdxUris.SPDX_TERMS, "originator");
+	public static final Property SUPPLIER = new PropertyImpl(SpdxUris.SPDX_TERMS, "supplier");
 
 	// FILE PROPERTIES
 	public static final Property HAS_FILE = new PropertyImpl(SpdxUris.SPDX_TERMS, "hasFile");
@@ -55,6 +58,8 @@ public final class SpdxProperties {
 	public static final Property LICENSE_INFO_IN_FILE = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseInfoInFile");
 	public static final Property LICENSE_EXTRACTED_TEXT = new PropertyImpl(SpdxUris.SPDX_TERMS, "extractedText");
 	public static final Property LICENSE_ID = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseId");
+	public static final Property NAME = new PropertyImpl(SpdxUris.SPDX_TERMS, "name");
+	public static final Property OSI_APPROVED = new PropertyImpl(SpdxUris.SPDX_TERMS, "isOsiApproved");
 	
 	// ANNOTATIONS
 	public static final Property ANNOTATION = new PropertyImpl(SpdxUris.SPDX_TERMS, "annotation");

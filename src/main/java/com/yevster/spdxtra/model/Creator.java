@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.yevster.spdxtra.Validate;
 
-public final class Creator {
+public class Creator {
 
 	private Supplier<String> toString;
 
@@ -25,12 +25,19 @@ public final class Creator {
 		this.toString = toString;
 	}
 
-	public static Creator person(String name, Optional<String> email) {
-		return new Creator(name, email, () -> "Person: " + name + " (" + email.orElse("") + ")");
+	public static final class HumanCreator extends Creator {
+		public HumanCreator(String name, Optional<String> email, Supplier<String> toString) {
+			super(name, email, toString);
+		}
+
 	}
 
-	public static Creator organization(String name, Optional<String> email) {
-		return new Creator(name, email, () -> "Organization: " + name + " (" + email.orElse("") + ")");
+	public static HumanCreator person(String name, Optional<String> email) {
+		return new HumanCreator(name, email, () -> "Person: " + name + " (" + email.orElse("") + ")");
+	}
+
+	public static HumanCreator organization(String name, Optional<String> email) {
+		return new HumanCreator(name, email, () -> "Organization: " + name + " (" + email.orElse("") + ")");
 	}
 
 	public static Creator tool(String name) {

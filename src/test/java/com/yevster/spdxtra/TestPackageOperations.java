@@ -1,39 +1,38 @@
 package com.yevster.spdxtra;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.jena.ext.com.google.common.collect.Sets;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import com.yevster.spdxtra.LicenseList;
-import com.yevster.spdxtra.NoneNoAssertionOrValue;
-import com.yevster.spdxtra.RdfResourceUpdate;
-import com.yevster.spdxtra.Read;
-import com.yevster.spdxtra.SpdxProperties;
-import com.yevster.spdxtra.Write;
 import com.yevster.spdxtra.Read.Document;
-import com.yevster.spdxtra.Read.Package;
 import com.yevster.spdxtra.Write.ModelUpdate;
+import com.yevster.spdxtra.model.Checksum;
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.Relationship;
 import com.yevster.spdxtra.model.SpdxDocument;
 import com.yevster.spdxtra.model.SpdxFile;
 import com.yevster.spdxtra.model.SpdxPackage;
 import com.yevster.spdxtra.model.write.License;
-
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.junit.Test;
+import com.yevster.spdxtra.util.MiscUtils;
 
 public class TestPackageOperations {
 
@@ -71,11 +70,14 @@ public class TestPackageOperations {
 		ModelUpdate update = Write.Package.name(pkg.getUri(), newName);
 		// The package should not have been changed.
 		assertEquals(oldName, pkg.getName());
-		//This is a unit test, so we'll break encapsulation to look inside:
-		assertEquals(pkg.getUri(), ((RdfResourceUpdate)update).getResourceUri());
+		// This is a unit test, so we'll break encapsulation to look inside:
+		assertEquals(pkg.getUri(), ((RdfResourceUpdate) update).getResourceUri());
 		updates.add(Write.Package.filesAnalyzed(pkg.getUri(), false));
 		updates.add(Write.Package.licenseComments(pkg.getUri(), "Nice license!"));
 		updates.add(Write.Package.comment(pkg.getUri(), "Package comment, yeeeah!"));
+		updates.add(Write.Package.supplier(pkg.getUri(), Creator.organization("Evil, Inc.", Optional.empty())));
+		updates.add(Write.Package.originator(pkg.getUri(), Creator.person("Orey Ginator", Optional.of("oreyg@example.com"))));
+		updates.add(Write.Package.checksums(pkg.getUri(), "abc123"));
 		updates.add(update);
 
 		final String packageDownloadLocation = "git+https://git.myproject.org/MyProject.git@v10.0#src/lib.c";
@@ -86,11 +88,11 @@ public class TestPackageOperations {
 
 		final String packageHomePage = "http://www.example.org/packageOfDoom";
 		updates.add(Write.Package.homepage(pkg.getUri(), NoneNoAssertionOrValue.of(packageHomePage)));
-		
+
 		final String summary = "This is a summary";
 		final String description = "This is a detailed description. It's even more boring than the summary.";
 		final String sourceInfo = "This is the source info. Use the source, Luke!";
-		
+
 		updates.add(Write.Package.description(pkg.getUri(), description));
 		updates.add(Write.Package.summary(pkg.getUri(), summary));
 		updates.add(Write.Package.sourceInfo(pkg.getUri(), sourceInfo));
@@ -112,6 +114,9 @@ public class TestPackageOperations {
 		assertEquals(Optional.of(summary), pkg.getSummary());
 		assertEquals(Optional.of(sourceInfo), pkg.getSourceInfo());
 		assertEquals(Optional.of("Package comment, yeeeah!"), pkg.getComment());
+		assertEquals(Optional.of("Organization: Evil, Inc. ()"), pkg.getSupplier());
+		assertEquals(Optional.of("Person: Orey Ginator (oreyg@example.com)"), pkg.getOriginator());
+		assertEquals(Sets.newHashSet(Checksum.sha1("abc123")), pkg.getChecksums());
 	}
 
 	@Test
@@ -120,7 +125,8 @@ public class TestPackageOperations {
 		SpdxPackage pkg = new SpdxPackage(
 				Read.lookupResourceByUri(dataset, "http://spdx.org/documents/spdx-toolsv2.0-rc1#SPDXRef-1").get());
 		// Let's set a declared license.
-		RdfResourceUpdate update = (RdfResourceUpdate)Write.Package.declaredLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
+		RdfResourceUpdate update = (RdfResourceUpdate) Write.Package.declaredLicense(pkg,
+				LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
 		assertEquals(SpdxProperties.LICENSE_DECLARED, update.getProperty());
 
 		// And a concluded license to NOASSERT
@@ -132,9 +138,8 @@ public class TestPackageOperations {
 		assertEquals("http://spdx.org/rdf/terms#noassertion", pkg.getPropertyAsResource(SpdxProperties.LICENSE_CONCLUDED).get().getURI());
 
 		// Set the declared license to NONE and concluded license to GPL-2.0
-		
-		Write.applyUpdatesInOneTransaction(dataset, 
-				Write.Package.declaredLicense(pkg, License.NONE),
+
+		Write.applyUpdatesInOneTransaction(dataset, Write.Package.declaredLicense(pkg, License.NONE),
 				Write.Package.concludedLicense(pkg, LicenseList.INSTANCE.getListedLicenseById("GPL-2.0").get()));
 
 		// Look closer to the metal. Did we create a duplicate property...
@@ -196,6 +201,9 @@ public class TestPackageOperations {
 		final String packageName = "BundleOfJoy";
 		final String copyrightText = "Copyright(c) 2016 Joyco, Inc.\nAll rights reserved.\nSo don'tcha be messin'";
 
+		final License license1 = License.extracted("License text", "Namey McNameface", baseUrl, "LicenseRef-NameyMcNameface");
+		final License license2 = License.extracted("License Text2", "L2D2", baseUrl, "LicenseRef-L2D2");
+
 		List<ModelUpdate> updates = new LinkedList<>();
 		updates.add(Write.New.document(baseUrl, documentSpdxId, "El documento fantastico!", Creator.tool("Testy McTestface")));
 
@@ -211,12 +219,17 @@ public class TestPackageOperations {
 		}
 
 		updates.add(Write.Package.copyrightText(baseUrl + "#" + packageSpdxId, NoneNoAssertionOrValue.of(copyrightText)));
+		updates.add(Write.Package.concludedLicense(baseUrl + "#" + packageSpdxId, license1));
+		updates.add(Write.Package.addLicenseInfoFromFiles(baseUrl + "#" + packageSpdxId, license1));
+		updates.add(Write.Package.addLicenseInfoFromFiles(baseUrl + "#" + packageSpdxId, license2));
 		Write.applyUpdatesInOneTransaction(dataset, updates);
+		updates.clear();
 
 		/*
 		 * Now let's make sure the relationship got properly created!
 		 */
 		SpdxDocument doc = new SpdxDocument(Read.lookupResourceByUri(dataset, baseUrl + "#" + documentSpdxId).get());
+		Resource pkgResource = Read.lookupResourceByUri(dataset, baseUrl + "#" + packageSpdxId).get();
 		assertNotNull(doc);
 		List<Relationship> relationships = Read.getRelationships(dataset, doc).collect(Collectors.toList());
 		assertEquals(1, relationships.size());
@@ -224,6 +237,12 @@ public class TestPackageOperations {
 		Relationship docDescribesPackage = relationships.get(0);
 		assertEquals(Relationship.Type.DESCRIBES, docDescribesPackage.getType());
 		assertTrue(docDescribesPackage.getRelatedElement() instanceof SpdxPackage);
+		assertEquals(baseUrl + "#LicenseRef-NameyMcNameface",
+				pkgResource.getProperty(SpdxProperties.LICENSE_CONCLUDED).getObject().asResource().getURI());
+
+		Set<String> licenseUrisFromFiles = MiscUtils.toLinearStream(pkgResource.listProperties(SpdxProperties.LICENSE_INFO_FROM_FILES))
+				.map(Statement::getObject).map(RDFNode::asResource).map(Resource::getURI).collect(Collectors.toSet());
+		assertEquals(Sets.newHashSet(baseUrl + "#LicenseRef-NameyMcNameface", baseUrl + "#LicenseRef-L2D2"), licenseUrisFromFiles);
 
 		/*
 		 * Now, let's verify the package
@@ -235,7 +254,7 @@ public class TestPackageOperations {
 		assertEquals(copyrightText, pkg.getCopyright().getLiteralOrUriValue());
 		assertEquals(true, pkg.getFilesAnalyzed());// FilesAnalyzed should
 		// default to true.
-		assertNull(pkg.getPropertyAsString(SpdxProperties.LICENSE_CONCLUDED));
+		assertNull(pkg.getPropertyAsString(SpdxProperties.LICENSE_DECLARED));
 		/*
 		 * Now, let's verify the inverse relationship
 		 */
@@ -289,13 +308,13 @@ public class TestPackageOperations {
 				// Remove files from package
 				(m) -> {
 					m.getResource(baseUrl + "#" + packageSpdxId).removeAll(SpdxProperties.HAS_FILE);
-				}, //Set filesAnalyzed to false
+				}, // Set filesAnalyzed to false
 				Write.Package.filesAnalyzed(baseUrl + "#" + packageSpdxId, false),
-				//Recompute
+				// Recompute
 				Write.Package.finalize(baseUrl + "#" + packageSpdxId));
 		pkg = new SpdxPackage(dataset.getDefaultModel().getResource(baseUrl + "#" + packageSpdxId));
 		assertEquals(Optional.empty(), pkg.getPackageVerificationCode());
-		
+
 	}
 
 }

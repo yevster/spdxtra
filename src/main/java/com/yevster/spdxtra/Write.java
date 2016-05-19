@@ -32,6 +32,7 @@ import org.apache.jena.tdb.TDBFactory;
 
 import com.google.common.collect.Ordering;
 import com.yevster.spdxtra.model.Annotation.Type;
+import com.yevster.spdxtra.model.Creator.HumanCreator;
 import com.yevster.spdxtra.model.Checksum;
 import com.yevster.spdxtra.model.Creator;
 import com.yevster.spdxtra.model.FileType;
@@ -49,6 +50,12 @@ public final class Write {
 	public static interface ModelUpdate {
 		void apply(Model model);
 	}
+
+	/**
+	 * An model update that doesn't do anything.
+	 */
+	public static final ModelUpdate NOTHING = (m) -> {
+	};
 
 	public static final class New {
 		/**
@@ -283,6 +290,15 @@ public final class Write {
 		}
 
 		/**
+		 * Generates an update for the packages checksum property, with one or
+		 * more values.
+		 */
+		public static ModelUpdate checksums(String packageUri, String sha1, Checksum... others) {
+			// Already implemented in files, with no differences in logic
+			return File.checksums(packageUri, sha1, others);
+		}
+
+		/**
 		 * Generates an update that adds a file with specified identifying
 		 * information to the package. Note: the arguments of this method do not
 		 * constitute the minimal necessary file information to produce a legal
@@ -378,15 +394,36 @@ public final class Write {
 		}
 
 		/**
-		 * Sets the package's download location.
+		 * Generates an update that sets the package's download location.
 		 *
 		 * @param packageUri
 		 * @param downloadLocation
 		 * @return
 		 */
-		public static RdfResourceUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
+		public static ModelUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
 					downloadLocation.getLiteralOrUriValue());
+		}
+
+		/**
+		 * Generates an update that sets the package's supplier.
+		 */
+		public static ModelUpdate supplier(String packageUri, HumanCreator supplier) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SUPPLIER, supplier.toString());
+		}
+
+		/**
+		 * Generates an update that sets the package's originator.
+		 */
+		public static ModelUpdate originator(String packageUri, HumanCreator originator) {
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.ORIGINATOR, originator.toString());
+		}
+
+		/**
+		 * Generates an update that adds another value of the "License Information from Files" property to any values that may have been previously specified.
+		 */
+		public static ModelUpdate addLicenseInfoFromFiles(String packageUri, License license){
+			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_INFO_FROM_FILES, true, license::getRdfNode);
 		}
 
 		/**

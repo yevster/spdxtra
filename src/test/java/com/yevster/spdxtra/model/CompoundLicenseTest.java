@@ -97,7 +97,7 @@ public class CompoundLicenseTest {
 	public void testDisjunctiveLicense() {
 		String extractedLicenseId = "LicenseRef-AyCaramba";
 		License disjunctiveLicense = License.or(
-				License.extracted("Ay caramba, dios mio! No estoy bien.", documentNamespace, extractedLicenseId),
+				License.extracted("Ay caramba, dios mio! No estoy bien.", "oyoyoyo", documentNamespace, extractedLicenseId),
 				License.NOASSERTION);
 		assertNotNull(disjunctiveLicense);
 

@@ -26,7 +26,6 @@ public enum LicenseList {
 	INSTANCE;
 
 	public static class ListedLicense extends License {
-		private static final Property osiApprovedProperty = new PropertyImpl(SpdxUris.SPDX_TERMS, "isOsiApproved");
 		private final RDFNode rdfNode;
 		private String name;
 		private String id;
@@ -39,9 +38,9 @@ public enum LicenseList {
 		 * over the good parts and let them go out of scope.
 		 */
 		ListedLicense(Resource r) {
-			this.id = r.getProperty(licenseIdProperty).getString();
-			this.name = r.getProperty(licenseNameProperty).getString();
-			this.osiApproved = r.getProperty(osiApprovedProperty).getBoolean();
+			this.id = r.getProperty(SpdxProperties.LICENSE_ID).getString();
+			this.name = r.getProperty(SpdxProperties.NAME).getString();
+			this.osiApproved = r.getProperty(SpdxProperties.OSI_APPROVED).getBoolean();
 			this.rdfNode = ResourceFactory.createResource(SpdxUris.LISTED_LICENSE_NAMESPACE + id);
 		}
 
