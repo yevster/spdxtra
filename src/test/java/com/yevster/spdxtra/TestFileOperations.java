@@ -69,7 +69,7 @@ public class TestFileOperations {
 				Write.File.fileTypes(expectedFileUrl, FileType.OTHER, FileType.APPLICATION),
 				Write.File.concludedLicense(expectedFileUrl, License.NONE),
 				Write.File.checksums(expectedFileUrl, mockSha1, Checksum.md5(mockMd5)),
-				Write.File.licenseInfoInFile(expectedFileUrl, License.extracted(extractedLicense, licenseName, baseUrl, "LicenseRef-el")),
+				Write.File.addLicenseInfoInFile(expectedFileUrl, License.extracted(extractedLicense, licenseName, baseUrl, "LicenseRef-el")),
 				Write.File.artifactOf(expectedFileUrl, artifactOfName, null));
 		reloadPackage();
 		List<SpdxFile> allFilesInPackage = pkg.getFiles().collect(Collectors.toList());
