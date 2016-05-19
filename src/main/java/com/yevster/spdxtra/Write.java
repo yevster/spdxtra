@@ -420,9 +420,11 @@ public final class Write {
 		}
 
 		/**
-		 * Generates an update that adds another value of the "License Information from Files" property to any values that may have been previously specified.
+		 * Generates an update that adds another value of the
+		 * "License Information from Files" property to any values that may have
+		 * been previously specified.
 		 */
-		public static ModelUpdate addLicenseInfoFromFiles(String packageUri, License license){
+		public static ModelUpdate addLicenseInfoFromFiles(String packageUri, License license) {
 			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_INFO_FROM_FILES, true, license::getRdfNode);
 		}
 
@@ -587,14 +589,11 @@ public final class Write {
 		}
 
 		/**
-		 * Add license info in file
-		 * 
-		 * @param fileUri
-		 * @param license
-		 * @return
+		 * Generates an update that adds a license found in the file to any
+		 * existing values of this field.
 		 */
-		public static ModelUpdate licenseInfoInFile(String fileUri, final License license) {
-			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, false, (Model m) -> license.getRdfNode(m));
+		public static ModelUpdate addLicenseInfoInFile(String fileUri, final License license) {
+			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, true, (Model m) -> license.getRdfNode(m));
 		}
 
 		/**
