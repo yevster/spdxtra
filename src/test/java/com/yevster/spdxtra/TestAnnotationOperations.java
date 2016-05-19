@@ -44,7 +44,7 @@ public class TestAnnotationOperations {
 		Annotation.Type type = Annotation.Type.REVIEW;
 
 		Write.applyUpdatesInOneTransaction(dataset,
-				Write.New.annotation(baseUrl, packageSpdxId, type, annotationTime, annotator, Optional.of(comment)));
+				Write.New.annotation(baseUrl, packageSpdxId, type, annotationTime, annotator, comment));
 		// Test the annotation
 		pkgResource = dataset.getDefaultModel().getResource(packageUri);
 		Iterator<Statement> stIt = pkgResource.listProperties(SpdxProperties.ANNOTATION);
@@ -56,6 +56,7 @@ public class TestAnnotationOperations {
 		Assert.assertEquals(comment, annotation.getComment().get());
 		Assert.assertEquals(ZonedDateTime.ofInstant(annotationTime.toInstant(), ZoneId.of("UTC")), annotation.getDate());
 		Assert.assertEquals(annotator, annotation.getAnnotator());
+		Assert.assertEquals(type, annotation.getType());
 
 	}
 }

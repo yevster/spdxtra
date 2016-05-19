@@ -30,6 +30,7 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.tdb.TDBFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Ordering;
 import com.yevster.spdxtra.model.Annotation.Type;
 import com.yevster.spdxtra.model.Creator.HumanCreator;
@@ -100,7 +101,7 @@ public final class Write {
 		}
 
 		public static ModelUpdate annotation(String baseUrl, String parentSpdxId, Type type, ZonedDateTime date, Creator annotator,
-				Optional<String> comment) {
+				String comment) {
 			// validation
 			if (!Validate.baseUrl(baseUrl)) {
 				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
@@ -110,8 +111,8 @@ public final class Write {
 			}
 			Objects.requireNonNull(type);
 			Objects.requireNonNull(date);
-			Objects.requireNonNull(comment);
 
+			final ZonedDateTime utcDate = ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("UTC"));
 			return (model) -> {
 
 				Resource parentResource = model.getResource(baseUrl + "#" + parentSpdxId);
@@ -121,11 +122,11 @@ public final class Write {
 				}
 
 				Resource newAnnotationResource = model.createResource(SpdxResourceTypes.ANNOTATION_TYPE);
-				newAnnotationResource.addLiteral(SpdxProperties.ANNOTATION_DATE, date.format(DateTimeFormatter.ISO_INSTANT));
-				newAnnotationResource.addProperty(SpdxProperties.ANNOTATION_TYPE, type.getUri());
-				if (comment.isPresent()) {
-					newAnnotationResource.addLiteral(SpdxProperties.RDF_COMMENT, comment.get());
-				}
+				newAnnotationResource.addLiteral(SpdxProperties.ANNOTATION_DATE, utcDate.format(Constants.SPDX_DATE_FORMATTER));
+				newAnnotationResource.addProperty(SpdxProperties.ANNOTATION_TYPE, model.getResource(type.getUri()));
+			
+				newAnnotationResource.addLiteral(SpdxProperties.RDF_COMMENT, Strings.nullToEmpty(comment));
+				
 				newAnnotationResource.addProperty(SpdxProperties.ANNOTATOR, annotator.toString());
 				parentResource.addProperty(SpdxProperties.ANNOTATION, newAnnotationResource);
 
