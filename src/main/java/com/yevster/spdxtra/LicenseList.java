@@ -37,7 +37,7 @@ public enum LicenseList {
 		 * indefinitely, as with other RDF-based model objects, we'll just copy
 		 * over the good parts and let them go out of scope.
 		 */
-		ListedLicense(Resource r) {
+		protected ListedLicense(Resource r) {
 			this.id = r.getProperty(SpdxProperties.LICENSE_ID).getString();
 			this.name = r.getProperty(SpdxProperties.NAME).getString();
 			this.osiApproved = r.getProperty(SpdxProperties.OSI_APPROVED).getBoolean();
