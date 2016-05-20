@@ -105,8 +105,10 @@ public enum LicenseList {
 
 			Resource mainResource = dataset.getDefaultModel().getResource(Constants.LICENSE_LIST_URL);
 			version = mainResource.getProperty(SpdxProperties.LICENSE_LIST_VERSION).getString();
-			retrievedListedLicenses = MiscUtils.toLinearStream(mainResource.listProperties(SpdxProperties.LICENSE))
-					.map(Statement::getObject).map(RDFNode::asResource).map(ListedLicense::new)
+			retrievedListedLicenses = MiscUtils.toLinearStream(mainResource.listProperties(SpdxProperties.LICENSE_LIST_LICENSE))
+					.map(Statement::getObject)
+					.map(RDFNode::asResource)
+					.map(ListedLicense::new)
 					.collect(Collectors.toMap(ListedLicense::getLicenseId, Function.identity()));
 
 		} catch (URISyntaxException | IOException e) {

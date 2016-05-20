@@ -69,5 +69,5 @@ public final class SpdxProperties {
 	public static final Property ANNOTATOR = new PropertyImpl(SpdxUris.SPDX_TERMS, "annotator");
 	
 	//INTERNAL (Not in SPDX spec)
-	public static final Property LICENSE = new PropertyImpl("Spdxtra", "license");
+	public static final Property LICENSE_LIST_LICENSE = new PropertyImpl("http://github.com/yevster/spdxtra", "licenseListLicense");
 }
