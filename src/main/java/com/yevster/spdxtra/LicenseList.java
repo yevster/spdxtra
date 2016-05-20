@@ -94,24 +94,21 @@ public enum LicenseList {
 	private final String version;
 
 	private LicenseList() {
-		String licenseListLocation = System.getProperty(Constants.LICENSE_LIST_LOCATION_PROPERTY);
+		final String licenseListLocation = System.getProperty(Constants.LICENSE_LIST_LOCATION_PROPERTY);
 		try {
-			Path licenseListPath = StringUtils.isNotBlank(licenseListLocation) ? Paths.get(licenseListLocation)
-					: Paths.get(this.getClass().getClassLoader().getResource("licenseList.bin").toURI());
 			Dataset dataset = DatasetFactory.create();
-			try (InputStream is = Files.newInputStream(licenseListPath)) {
+			try (InputStream is = StringUtils.isNotBlank(licenseListLocation) ? Files.newInputStream(Paths.get(licenseListLocation))
+					: this.getClass().getClassLoader().getResourceAsStream("licenseList.bin")) {
 				RDFDataMgr.read(dataset, is, Lang.RDFTHRIFT);
 			}
 
 			Resource mainResource = dataset.getDefaultModel().getResource(Constants.LICENSE_LIST_URL);
 			version = mainResource.getProperty(SpdxProperties.LICENSE_LIST_VERSION).getString();
 			retrievedListedLicenses = MiscUtils.toLinearStream(mainResource.listProperties(SpdxProperties.LICENSE_LIST_LICENSE))
-					.map(Statement::getObject)
-					.map(RDFNode::asResource)
-					.map(ListedLicense::new)
+					.map(Statement::getObject).map(RDFNode::asResource).map(ListedLicense::new)
 					.collect(Collectors.toMap(ListedLicense::getLicenseId, Function.identity()));
 
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException("Unable to initialize license list");
 		}
 	}
