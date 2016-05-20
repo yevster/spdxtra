@@ -69,7 +69,8 @@ public class TestFileOperations {
 				Write.File.fileTypes(expectedFileUrl, FileType.OTHER, FileType.APPLICATION),
 				Write.File.concludedLicense(expectedFileUrl, License.NONE),
 				Write.File.checksums(expectedFileUrl, mockSha1, Checksum.md5(mockMd5)),
-				Write.File.addLicenseInfoInFile(expectedFileUrl, License.extracted(extractedLicense, licenseName, baseUrl, "LicenseRef-el")),
+				Write.File.addLicenseInfoInFile(expectedFileUrl,
+						License.extracted(extractedLicense, licenseName, baseUrl, "LicenseRef-el")),
 				Write.File.artifactOf(expectedFileUrl, artifactOfName, null));
 		reloadPackage();
 		List<SpdxFile> allFilesInPackage = pkg.getFiles().collect(Collectors.toList());
@@ -89,8 +90,11 @@ public class TestFileOperations {
 		assertEquals(new HashSet<String>(), file.getContributors());
 
 		Resource doapProject = file.rdfResource.getProperty(SpdxProperties.ARTIFACT_OF).getObject().asResource();
-		Assert.assertEquals("When DOAP homepage not specified, should default to UNKNOWN.", "UNKNOWN",
-				doapProject.getProperty(SpdxProperties.DOAP_HOMEPAGE).getString());
+		// The spec supports a value of UNKNOWN, but as other tools validate
+		// this field as a URL and it is optional
+		// SpdXtra should omit it entirely if blank.
+		Assert.assertEquals("When DOAP homepage not specified, should omit.", false,
+				doapProject.listProperties(SpdxProperties.DOAP_HOMEPAGE).hasNext());
 		Assert.assertEquals(artifactOfName, doapProject.getProperty(SpdxProperties.DOAP_NAME).getString());
 
 		// Test overwrites
@@ -114,12 +118,15 @@ public class TestFileOperations {
 		List<Resource> doapProjects = MiscUtils.toLinearStream(fileResource.listProperties(SpdxProperties.ARTIFACT_OF))
 				.map(Statement::getObject).map(RDFNode::asResource).collect(Collectors.toList());
 		Assert.assertEquals("Applying artifactOf update twice should produce two properties.", 2, doapProjects.size());
-		Set<String> expectedHomepages = Sets.newHashSet("UNKNOWN", artifactOfHomepage);
+		Set<String> expectedHomepages = Sets.newHashSet(null, artifactOfHomepage);
 
 		for (Resource dp : doapProjects) {
 			Assert.assertNotNull(dp);
 			Assert.assertEquals(artifactOfName, dp.getProperty(SpdxProperties.DOAP_NAME).getString());
-			String actualHomepage = dp.getProperty(SpdxProperties.DOAP_HOMEPAGE).getString();
+			// Use a null value to represent the project with no homepage (which
+			// in truth just won't have that property).
+			String actualHomepage = dp.getProperty(SpdxProperties.DOAP_HOMEPAGE) != null
+					? dp.getProperty(SpdxProperties.DOAP_HOMEPAGE).getString() : null;
 			Assert.assertTrue("Homepage has an unexpected value: " + actualHomepage, expectedHomepages.remove(actualHomepage));
 			Assert.assertEquals("Unexpected type for DOAP Project resource", "http://usefulinc.com/ns/doap#Project",
 					dp.getProperty(SpdxProperties.RDF_TYPE).getObject().asResource().getURI());

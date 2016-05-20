@@ -124,9 +124,9 @@ public final class Write {
 				Resource newAnnotationResource = model.createResource(SpdxResourceTypes.ANNOTATION_TYPE);
 				newAnnotationResource.addLiteral(SpdxProperties.ANNOTATION_DATE, utcDate.format(Constants.SPDX_DATE_FORMATTER));
 				newAnnotationResource.addProperty(SpdxProperties.ANNOTATION_TYPE, model.getResource(type.getUri()));
-			
+
 				newAnnotationResource.addLiteral(SpdxProperties.RDF_COMMENT, Strings.nullToEmpty(comment));
-				
+
 				newAnnotationResource.addProperty(SpdxProperties.ANNOTATOR, annotator.toString());
 				parentResource.addProperty(SpdxProperties.ANNOTATION, newAnnotationResource);
 
@@ -583,7 +583,9 @@ public final class Write {
 
 			return new RdfResourceUpdate(fileUri, SpdxProperties.ARTIFACT_OF, true, (m) -> {
 				Resource doapProject = m.createResource(SpdxResourceTypes.DOAP_PROJECT);
-				doapProject.addProperty(SpdxProperties.DOAP_HOMEPAGE, StringUtils.isBlank(projectHomepage) ? "UNKNOWN" : projectHomepage);
+				if (StringUtils.isNotBlank(projectHomepage)) {
+					doapProject.addProperty(SpdxProperties.DOAP_HOMEPAGE, projectHomepage);
+				}
 				doapProject.addProperty(SpdxProperties.DOAP_NAME, projectName);
 				return doapProject;
 			});
