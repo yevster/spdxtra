@@ -18,6 +18,7 @@ public final class SpdxProperties {
 	public static final Property CREATOR = new PropertyImpl(SpdxUris.SPDX_TERMS, "creator");
 	public static final Property CREATION_DATE = new PropertyImpl(SpdxUris.SPDX_TERMS, "created");
 	public static final Property SPEC_VERSION = new PropertyImpl(SpdxUris.SPDX_TERMS, "specVersion");
+	public static final Property LICENSE_LIST_VERSION = new PropertyImpl(SpdxUris.SPDX_TERMS, "licenseListVersion");
 
 	// PACKAGE PROPERTIES
 	public static final Property PACKAGE_VERSION_INFO = new PropertyImpl(SpdxUris.SPDX_TERMS + "versionInfo");
@@ -66,4 +67,7 @@ public final class SpdxProperties {
 	public static final Property ANNOTATION_TYPE= new PropertyImpl(SpdxUris.SPDX_TERMS, "annotationType");
 	public static final Property ANNOTATION_DATE = new PropertyImpl(SpdxUris.SPDX_TERMS, "annotationDate");
 	public static final Property ANNOTATOR = new PropertyImpl(SpdxUris.SPDX_TERMS, "annotator");
+	
+	//INTERNAL (Not in SPDX spec)
+	public static final Property LICENSE = new PropertyImpl("Spdxtra", "license");
 }

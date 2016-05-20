@@ -1,32 +1,34 @@
 package com.yevster.spdxtra;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 
 import com.yevster.spdxtra.model.write.License;
-
-import net.rootdev.javardfa.jena.RDFaReader.HTMLRDFaReader;
+import com.yevster.spdxtra.util.MiscUtils;
 
 public enum LicenseList {
 	INSTANCE;
 
 	public static class ListedLicense extends License {
-		private final RDFNode rdfNode;
 		private String name;
 		private String id;
 		private boolean osiApproved;
@@ -41,7 +43,7 @@ public enum LicenseList {
 			this.id = r.getProperty(SpdxProperties.LICENSE_ID).getString();
 			this.name = r.getProperty(SpdxProperties.NAME).getString();
 			this.osiApproved = r.getProperty(SpdxProperties.OSI_APPROVED).getBoolean();
-			this.rdfNode = ResourceFactory.createResource(SpdxUris.LISTED_LICENSE_NAMESPACE + id);
+
 		}
 
 		/**
@@ -70,25 +72,46 @@ public enum LicenseList {
 		}
 
 		public RDFNode getRdfNode(Model m) {
-			return rdfNode;
+			return ResourceFactory.createResource(SpdxUris.LISTED_LICENSE_NAMESPACE + id);
+		}
+
+		/**
+		 * Saves all the information available for the license, beyond what is
+		 * used in SPDX. Can be used to clone or perist the license list.
+		 */
+		public RDFNode getRdfNodeFull(Model m) {
+			String uri = getRdfNode(null).asResource().getURI();
+			Resource resource = m.createResource(uri);
+			resource.addProperty(SpdxProperties.LICENSE_ID, getLicenseId());
+			resource.addLiteral(SpdxProperties.OSI_APPROVED, isOsiApproved());
+			resource.addProperty(SpdxProperties.NAME, getName());
+			return resource;
 		}
 	}
 
-	public static class LicenseRetrievalException extends RuntimeException {
+	private final Map<String, ListedLicense> retrievedListedLicenses;
 
-		public LicenseRetrievalException(String s, Throwable cause) {
-			super(s, cause);
-		}
-
-		public LicenseRetrievalException(String s) {
-			super(s);
-		}
-	}
-
-	private HashMap<String, ListedLicense> retrievedListedLicenses = new HashMap<String, ListedLicense>();
+	private final String version;
 
 	private LicenseList() {
+		String licenseListLocation = System.getProperty(Constants.LICENSE_LIST_LOCATION_PROPERTY);
+		try {
+			Path licenseListPath = StringUtils.isNotBlank(licenseListLocation) ? Paths.get(licenseListLocation)
+					: Paths.get(this.getClass().getClassLoader().getResource("licenseList.bin").toURI());
+			Dataset dataset = DatasetFactory.create();
+			try (InputStream is = Files.newInputStream(licenseListPath)) {
+				RDFDataMgr.read(dataset, is, Lang.RDFTHRIFT);
+			}
 
+			Resource mainResource = dataset.getDefaultModel().getResource(Constants.LICENSE_LIST_URL);
+			version = mainResource.getProperty(SpdxProperties.LICENSE_LIST_VERSION).getString();
+			retrievedListedLicenses = MiscUtils.toLinearStream(mainResource.listProperties(SpdxProperties.LICENSE))
+					.map(Statement::getObject).map(RDFNode::asResource).map(ListedLicense::new)
+					.collect(Collectors.toMap(ListedLicense::getLicenseId, Function.identity()));
+
+		} catch (URISyntaxException | IOException e) {
+			throw new RuntimeException("Unable to initialize license list");
+		}
 	}
 
 	/**
@@ -99,44 +122,17 @@ public enum LicenseList {
 	 * @return
 	 */
 	public Optional<ListedLicense> getListedLicenseById(String id) {
-		// Verify arguments
-		if (StringUtils.isBlank(id)) {
-			throw new IllegalArgumentException("Cannot get listed license with null or empty id");
-		} // For security
-		if (StringUtils.containsAny(id, '/', ':')) {
-			throw new IllegalArgumentException("Illegal characters in id " + id);
-		}
+		return Optional.ofNullable(retrievedListedLicenses.get(id));
 
-		// Have we already retrieved?
-		if (retrievedListedLicenses.containsKey(id))
-			return Optional.of(retrievedListedLicenses.get(id));
+	}
 
-		String licenseUri = SpdxUris.LISTED_LICENSE_NAMESPACE + id;
-
-		try {
-			Model model = ModelFactory.createDefaultModel();
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpUriRequest request = new HttpGet(licenseUri);
-			HttpResponse response = httpClient.execute(request);
-
-			if (response.getStatusLine().getStatusCode() == 404) {
-				return Optional.empty();
-			}
-			if (response.getStatusLine().getStatusCode() != 200) {
-				throw new LicenseRetrievalException("Error accessing " + licenseUri + ". Status returned: "
-						+ response.getStatusLine().getStatusCode() + ". Reason:" + response.getStatusLine().getReasonPhrase());
-			}
-
-			new HTMLRDFaReader().read(model, response.getEntity().getContent(), "http://www.w3.org/1999/xhtml:html");
-
-			Resource foundLicense = model.listSubjects().next();
-			ListedLicense result = new ListedLicense(foundLicense);
-			retrievedListedLicenses.put(id, result);
-			return Optional.of(result);
-		} catch (IOException e) {
-			throw new LicenseRetrievalException("Error accessing " + licenseUri, e);
-		}
-
+	/**
+	 * Returns the license list version.
+	 * 
+	 * @return
+	 */
+	public String getVersion() {
+		return version;
 	}
 
 }
