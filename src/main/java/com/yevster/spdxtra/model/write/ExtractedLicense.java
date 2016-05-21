@@ -22,32 +22,29 @@ import com.yevster.spdxtra.Validate;
  */
 class ExtractedLicense extends License {
 
-	private static final Resource extractedLicenseType = ResourceFactory.createResource(SpdxUris.SPDX_TERMS + "ExtractedLicensingInfo");
+	private static final Resource extractedLicenseType = ResourceFactory
+			.createResource(SpdxUris.SPDX_TERMS + "ExtractedLicensingInfo");
 
 	private String text;
 
 	private String spdxId;
 
 	private String baseUrl;
-	
+
 	private String name;
 
 	private Optional<String> comment;
-	
+
 	public ExtractedLicense(String text, String name, String baseUrl, String spdxId, Optional<String> comment) {
-		if (!Validate.spdxLicenseId(spdxId))
-			throw new IllegalArgumentException("Illegal SPDX ID " + spdxId);
-		if (!Validate.baseUrl(baseUrl)) {
-			throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
-		}
-		if (StringUtils.isBlank(text))
-			throw new IllegalArgumentException("License text cannot be null or blank");
+		Validate.spdxLicenseId(spdxId);
+		Validate.baseUrl(baseUrl);
+		Validate.notBlank(text);
 		this.spdxId = spdxId;
 		this.text = text;
 		this.baseUrl = baseUrl;
 		this.name = name;
 		this.comment = comment;
-		
+
 	}
 
 	@Override
@@ -63,12 +60,12 @@ class ExtractedLicense extends License {
 		resource.addLiteral(SpdxProperties.LICENSE_ID, spdxId);
 		resource.addLiteral(SpdxProperties.LICENSE_EXTRACTED_TEXT, text);
 		resource.addLiteral(SpdxProperties.NAME, name);
-		if (comment.isPresent()){
+		if (comment.isPresent()) {
 			resource.addLiteral(SpdxProperties.RDF_COMMENT, comment.get());
 		}
 		return resource;
 	}
-	
+
 	@Override
 	public String getPrettyName() {
 		return this.name;

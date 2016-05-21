@@ -33,7 +33,9 @@ public class RdfResourceUpdate implements ModelUpdate {
 	 * @param updatedValue
 	 * @return
 	 */
-	public static RdfResourceUpdate updateStringProperty(String resourceUri, Property property, String updatedValue) {
+	static RdfResourceUpdate updateStringProperty(String resourceUri, Property property, String updatedValue) {
+		Validate.notNull(updatedValue); 
+		//The rest gets validated downstream.
 		UpdateRdfNodeBuilder updateBuilder = (Model model) -> model.createLiteral(updatedValue);
 		return new RdfResourceUpdate(resourceUri, property, false, updateBuilder);
 	}
@@ -66,10 +68,14 @@ public class RdfResourceUpdate implements ModelUpdate {
 	 *            can have multiple relationships).
 	 * 
 	 */
-	public RdfResourceUpdate(String resourceUri, Property property, boolean createNewProperty, UpdateRdfNodeBuilder newValueBuilder) {
-		this.resourceUri = Objects.requireNonNull(resourceUri);
-		this.property = Objects.requireNonNull(property);
-		this.newValueBuilder = Objects.requireNonNull(newValueBuilder);
+	public RdfResourceUpdate(String resourceUri, Property property, boolean createNewProperty,
+			UpdateRdfNodeBuilder newValueBuilder) {
+		Validate.notBlank(resourceUri);
+		Validate.notNull(property);
+		Validate.notNull(newValueBuilder);
+		this.resourceUri = resourceUri;
+		this.property = property;
+		this.newValueBuilder = newValueBuilder;
 		this.createNewProperty = createNewProperty;
 	}
 

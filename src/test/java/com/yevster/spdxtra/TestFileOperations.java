@@ -54,7 +54,7 @@ public class TestFileOperations {
 	public void testAddFileToPackage() {
 		assertEquals("Newly-created package should have no files", 0, pkg.getFiles().count());
 		final String fileName = "./foo/bar/whatevs.txt";
-		final String expectedFileUrl = baseUrl + "#myFile";
+		final String expectedFileUrl = baseUrl + "#SPDXRef-myFile";
 		final String mockSha1 = "abc135875aeffffff";
 		final String mockMd5 = DigestUtils.md5Hex("My sum");
 		final String mockSha256 = DigestUtils.sha256Hex("My sum");
@@ -65,7 +65,7 @@ public class TestFileOperations {
 		final String artifactOfName = "Epic Failure 1,9";
 		final String licenseName = "El nombre";
 
-		Write.applyUpdatesInOneTransaction(dataset, Write.Package.addFile(baseUrl, packageSpdxId, "myFile", fileName),
+		Write.applyUpdatesInOneTransaction(dataset, Write.Package.addFile(baseUrl, packageSpdxId, "SPDXRef-myFile", fileName),
 				Write.File.fileTypes(expectedFileUrl, FileType.OTHER, FileType.APPLICATION),
 				Write.File.concludedLicense(expectedFileUrl, License.NONE),
 				Write.File.checksums(expectedFileUrl, mockSha1, Checksum.md5(mockMd5)),

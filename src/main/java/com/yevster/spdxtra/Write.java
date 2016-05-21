@@ -69,17 +69,14 @@ public final class Write {
 		public static ModelUpdate document(String baseUrl, String spdxId, String name, Creator creator,
 				Creator... additionalCreators) {
 			// validation
-			if (!Validate.baseUrl(baseUrl)) {
-				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
-			}
-			if (!Validate.spdxId(spdxId)) {
-				throw new IllegalArgumentException("Illegal spdxId. Must be of the form SPDXRef-*");
-			}
-			if (StringUtils.isBlank(name) || StringUtils.containsAny(name, '\n', '\r')) {
-				throw new IllegalArgumentException("Name cannot be null or blank and must be a single line of text.");
-			}
+			Validate.baseUrl(baseUrl);
+			Validate.spdxElementId(spdxId);
+			Validate.notBlank(name);
+			Validate.validate(!StringUtils.containsAny(name, '\n', '\r'), "Name must be a single line of text.");
+
 			final String uri = baseUrl + "#" + spdxId;
-			URI.create(uri); // An extra validity check.
+			URI.create(uri); // An extra validity check
+
 			return (model) -> {
 				// Map the spdx prefix to the namespaces. Otherwise, when
 				// written to RDF, the output will make children cry.
@@ -105,14 +102,10 @@ public final class Write {
 		public static ModelUpdate annotation(String baseUrl, String parentSpdxId, Type type, ZonedDateTime date,
 				Creator annotator, String comment) {
 			// validation
-			if (!Validate.baseUrl(baseUrl)) {
-				throw new IllegalArgumentException("Illegal base URL: " + baseUrl);
-			}
-			if (!Validate.spdxId(parentSpdxId)) {
-				throw new IllegalArgumentException("Illegal spdxId. Must be of the form SPDXRef-*");
-			}
-			Objects.requireNonNull(type);
-			Objects.requireNonNull(date);
+			Validate.baseUrl(baseUrl);
+			Validate.spdxElementId(parentSpdxId);
+			Validate.notNull(type);
+			Validate.notNull(date);
 
 			final ZonedDateTime utcDate = ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("UTC"));
 			return (model) -> {
@@ -151,10 +144,8 @@ public final class Write {
 
 		public static ModelUpdate addPackage(String documentBaseUrl, String documentSpdxId, String packageSpdxId,
 				final String packageSpdxName) {
-			if (!Validate.spdxId(packageSpdxId)) {
-				throw new IllegalArgumentException("SPDX ID must be in the form SPDXRef-*");
-			}
 
+			Validate.spdxElementId(packageSpdxId);
 			final String packageUri = documentBaseUrl + "#" + packageSpdxId;
 
 			return (model) -> {
@@ -168,9 +159,13 @@ public final class Write {
 		}
 
 		public static ModelUpdate addDescribedPackage(String documentBaseUrl, String documentSpdxId,
-				String packageSpdxId, final String packageSpdxName) {
+				String packageSpdxId, final String packageName) {
+			Validate.baseUrl(documentBaseUrl);
+			Validate.spdxElementId(documentSpdxId);
+			Validate.spdxElementId(packageSpdxId);
+			Validate.notBlank(packageName);
 
-			ModelUpdate createPackage = addPackage(documentBaseUrl, documentSpdxId, packageSpdxId, packageSpdxName);
+			ModelUpdate createPackage = addPackage(documentBaseUrl, documentSpdxId, packageSpdxId, packageName);
 
 			final String packageUri = documentBaseUrl + "#" + packageSpdxId;
 			final String documentUri = documentBaseUrl + "#" + documentSpdxId;
@@ -205,6 +200,9 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate creationDate(String documentBaseUrl, String documentSpdxId, ZonedDateTime dateTime) {
+			Validate.baseUrl(documentBaseUrl);
+			Validate.spdxElementId(documentSpdxId);
+			Validate.notNull(dateTime);
 			ZonedDateTime utcTime = dateTime.withZoneSameInstant(ZoneId.of("UTC"));
 			String newTimeToWrite = utcTime.format(Constants.SPDX_DATE_FORMATTER);
 			return (model) -> {
@@ -225,6 +223,9 @@ public final class Write {
 		 */
 		public static ModelUpdate creationComment(String documentBaseUrl, String documentSpdxId,
 				String creationComment) {
+			Validate.baseUrl(documentBaseUrl);
+			Validate.spdxElementId(documentSpdxId);
+			Validate.notNull(creationComment);
 			return (model) -> {
 				final String documentUri = documentBaseUrl + "#" + documentSpdxId;
 				Resource resource = model.getResource(documentUri);
@@ -246,6 +247,9 @@ public final class Write {
 		 * Generates an update that sets the document comment.
 		 */
 		public static ModelUpdate comment(String documentBaseUrl, String documentSpdxId, String comment) {
+			Validate.baseUrl(documentBaseUrl);
+			Validate.spdxElementId(documentSpdxId);
+			Validate.notNull(comment);
 			return RdfResourceUpdate.updateStringProperty(documentBaseUrl + "#" + documentSpdxId,
 					SpdxProperties.RDF_COMMENT, comment);
 		}
@@ -281,6 +285,8 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate name(String uri, String newName) {
+			Validate.spdxElementUri(uri);
+			Validate.notBlank(newName);
 			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.SPDX_NAME, newName);
 		}
 
@@ -288,17 +294,18 @@ public final class Write {
 		 * Generates an update that sets the package's version
 		 */
 		public static RdfResourceUpdate version(String uri, String newVersion) {
+			Validate.spdxElementUri(uri);
+			Validate.notBlank(newVersion);
 			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.PACKAGE_VERSION_INFO, newVersion);
 		}
 
 		/**
-		 * Geneartes an update for the package's copyright text.
+		 * Generates an update for the package's copyright text.
 		 *
-		 * @param uri
-		 * @param copyrightText
-		 * @return
 		 */
 		public static RdfResourceUpdate copyrightText(String uri, NoneNoAssertionOrValue copyrightText) {
+			Validate.spdxElementUri(uri);
+			Validate.notNull(copyrightText);
 			return RdfResourceUpdate.updateStringProperty(uri, SpdxProperties.COPYRIGHT_TEXT,
 					copyrightText.getLiteralOrUriValue());
 		}
@@ -348,6 +355,8 @@ public final class Write {
 		 * @return
 		 */
 		public static RdfResourceUpdate declaredLicense(String packageUri, final License license) {
+			Validate.spdxElementUri(packageUri);
+			Validate.notNull(license);
 			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_DECLARED, false,
 					(m) -> license.getRdfNode(m));
 		}
@@ -371,6 +380,8 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate concludedLicense(String packageUri, final License license) {
+			Validate.notNull(license);
+			Validate.spdxElementUri(packageUri);
 			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_CONCLUDED, false,
 					(m) -> license.getRdfNode(m));
 		}
@@ -379,6 +390,8 @@ public final class Write {
 		 * Generates an update for the package's license comments.
 		 */
 		public static ModelUpdate licenseComments(String packageUri, String licenseComment) {
+			Validate.spdxElementUri(packageUri);
+			Validate.notNull(licenseComment);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.LICENSE_COMMENTS, licenseComment);
 		}
 
@@ -391,6 +404,7 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate filesAnalyzed(String packageUri, boolean newValue) {
+			Validate.spdxElementUri(packageUri);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.FILES_ANALYZED,
 					Boolean.toString(newValue));
 		}
@@ -404,6 +418,8 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate packageFileName(String packageUri, String fileName) {
+			Validate.spdxElementUri(packageUri);
+			Validate.notBlank(fileName);
 			if (StringUtils.isBlank(fileName)) {
 				throw new IllegalArgumentException("File name must not be blank");
 			}
@@ -418,6 +434,8 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate packageDownloadLocation(String packageUri, NoneNoAssertionOrValue downloadLocation) {
+			Validate.notNull(downloadLocation);
+			Validate.spdxElementUri(packageUri);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.PACKAGE_DOWNLOAD_LOCATION,
 					downloadLocation.getLiteralOrUriValue());
 		}
@@ -426,13 +444,20 @@ public final class Write {
 		 * Generates an update that sets the package's supplier.
 		 */
 		public static ModelUpdate supplier(String packageUri, HumanCreator supplier) {
-			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SUPPLIER, supplier.toString());
+			Validate.spdxElementUri(packageUri);
+			Validate.notNull(supplier);
+			String supplierString = supplier.toString();
+			Validate.notBlank(supplierString);
+
+			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SUPPLIER, supplierString);
 		}
 
 		/**
 		 * Generates an update that sets the package's originator.
 		 */
 		public static ModelUpdate originator(String packageUri, HumanCreator originator) {
+			Validate.spdxElementUri(packageUri);
+			Validate.notNull(originator);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.ORIGINATOR, originator.toString());
 		}
 
@@ -442,6 +467,8 @@ public final class Write {
 		 * been previously specified.
 		 */
 		public static ModelUpdate addLicenseInfoFromFiles(String packageUri, License license) {
+			Validate.spdxElementUri(packageUri);
+			Validate.notNull(license);
 			return new RdfResourceUpdate(packageUri, SpdxProperties.LICENSE_INFO_FROM_FILES, true, license::getRdfNode);
 		}
 
@@ -449,6 +476,7 @@ public final class Write {
 		 * Generates an update that sets the package's homepage
 		 */
 		public static RdfResourceUpdate homepage(String packageUri, NoneNoAssertionOrValue homepage) {
+			Validate.spdxElementUri(packageUri);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.HOMEPAGE,
 					homepage.getLiteralOrUriValue());
 		}
@@ -457,6 +485,7 @@ public final class Write {
 		 * Generates an update that sets the package's summary description.
 		 */
 		public static ModelUpdate summary(String packageUri, String summary) {
+			Validate.spdxElementUri(packageUri);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SUMMARY, summary);
 		}
 
@@ -464,6 +493,7 @@ public final class Write {
 		 * Generates an update that sets the package's detailed description.
 		 */
 		public static ModelUpdate description(String packageUri, String description) {
+			Validate.spdxElementUri(packageUri);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.DESCRIPTION, description);
 		}
 
@@ -474,6 +504,7 @@ public final class Write {
 		 * package."
 		 */
 		public static ModelUpdate sourceInfo(String packageUri, String sourceInfo) {
+			Validate.spdxElementUri(packageUri);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.SOURCE_INFO, sourceInfo);
 		}
 
@@ -481,6 +512,7 @@ public final class Write {
 		 * Generates an update that sets the package comment.
 		 */
 		public static ModelUpdate comment(String packageUri, String comment) {
+			Validate.spdxElementUri(packageUri);
 			return RdfResourceUpdate.updateStringProperty(packageUri, SpdxProperties.RDF_COMMENT, comment);
 		}
 
@@ -491,6 +523,7 @@ public final class Write {
 		 * modified. (not enforced)
 		 */
 		public static ModelUpdate finalize(String packageUri) {
+			Validate.spdxElementUri(packageUri);
 			return (Model m) -> {
 				Resource packageResource = m.getResource(packageUri);
 				// Package must exist.
@@ -589,6 +622,9 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate comment(String uri, String commentText) {
+			Validate.notNull(commentText);
+			Validate.spdxElementUri(uri);
+
 			return new RdfResourceUpdate(uri, SpdxProperties.RDF_COMMENT, false,
 					(m) -> ResourceFactory.createPlainLiteral(commentText));
 		}
@@ -599,7 +635,8 @@ public final class Write {
 		 * UNKNOWN will be used.
 		 */
 		public static ModelUpdate artifactOf(String fileUri, String projectName, String projectHomepage) {
-			Validate.name(projectName);
+			Validate.notBlank(projectName);
+			Validate.spdxElementUri(fileUri);
 
 			return new RdfResourceUpdate(fileUri, SpdxProperties.ARTIFACT_OF, true, (m) -> {
 				Resource doapProject = m.createResource(SpdxResourceTypes.DOAP_PROJECT);
@@ -616,6 +653,8 @@ public final class Write {
 		 * existing values of this field.
 		 */
 		public static ModelUpdate addLicenseInfoInFile(String fileUri, final License license) {
+			Validate.notNull(license);
+			Validate.spdxElementUri(fileUri);
 			return new RdfResourceUpdate(fileUri, SpdxProperties.LICENSE_INFO_IN_FILE, true,
 					(Model m) -> license.getRdfNode(m));
 		}
@@ -625,6 +664,8 @@ public final class Write {
 		 * previous values of this property on this file.
 		 */
 		public static ModelUpdate fileTypes(String fileUri, final FileType... fileTypes) {
+			Validate.spdxElementUri(fileUri);
+			Validate.noNulls(fileTypes);
 			return (Model m) -> {
 				Resource file = m.getResource(fileUri);
 				file.removeAll(SpdxProperties.FILE_TYPE);
@@ -646,6 +687,10 @@ public final class Write {
 		 * @return
 		 */
 		public static ModelUpdate checksums(String fileUri, String sha1, Checksum... others) {
+			Validate.spdxElementUri(fileUri);
+			Validate.notNull(sha1);
+			Validate.noNulls(others);
+
 			return (Model m) -> {
 				Resource file = m.getResource(fileUri);
 				file.removeAll(SpdxProperties.CHECKSUM);
@@ -660,6 +705,9 @@ public final class Write {
 		 * Generates an update that sets this file's notice text.
 		 */
 		public static ModelUpdate noticeText(String fileUri, String noticeText) {
+			Validate.notNull(noticeText);
+			Validate.spdxElementUri(fileUri);
+
 			return RdfResourceUpdate.updateStringProperty(fileUri, SpdxProperties.NOTICE_TEXT, noticeText);
 		}
 
@@ -668,11 +716,11 @@ public final class Write {
 		 * contributors previously set on this file will be replaced with the
 		 * provided values when the update is applied.
 		 * 
-		 * @param fileUri
-		 * @param contributors
 		 * @return
 		 */
 		public static ModelUpdate contributors(String fileUri, String... contributors) {
+			Validate.spdxElementUri(fileUri);
+			Validate.noNulls(contributors);
 			return (m) -> {
 				Resource file = m.getResource(fileUri);
 				file.removeAll(SpdxProperties.FILE_CONTRIBUTOR);
@@ -681,6 +729,7 @@ public final class Write {
 				}
 			};
 		}
+
 	}
 
 	/**
@@ -716,7 +765,7 @@ public final class Write {
 	 * @return
 	 */
 	public static Dataset rdfIntoNewDataset(Path inputFilePath, Path newDatasetPath) {
-		Objects.requireNonNull(newDatasetPath);
+		Validate.notNull(newDatasetPath);
 
 		if (Files.notExists(newDatasetPath) || !Files.isDirectory(newDatasetPath)) {
 			throw new IllegalArgumentException("Invalid dataset path: " + newDatasetPath.toAbsolutePath().toString());
@@ -738,7 +787,7 @@ public final class Write {
 	 * @param dataset
 	 */
 	public static void rdfIntoDataset(Path inputFilePath, Dataset dataset) {
-		Objects.requireNonNull(inputFilePath);
+		Validate.notNull(inputFilePath);
 		if (Files.notExists(inputFilePath) && Files.isRegularFile(inputFilePath))
 			throw new IllegalArgumentException("File " + inputFilePath.toAbsolutePath().toString() + " does not exist");
 
@@ -786,6 +835,9 @@ public final class Write {
 	 */
 	private static ModelUpdate addNewFileToElement(String baseUrl, String parentSpdxId, String newFileSpdxId,
 			String newFileName) {
+		Validate.baseUrl(baseUrl);
+		Validate.spdxElementId(parentSpdxId);
+		Validate.spdxElementId(newFileSpdxId);
 		final String parentUri = baseUrl + '#' + parentSpdxId;
 		final String fileUri = baseUrl + '#' + newFileSpdxId;
 
@@ -822,8 +874,8 @@ public final class Write {
 	 */
 	protected static Comparator<Resource> byRequiredLiteralProperty(Property property) {
 		return Ordering.from((Resource r1, Resource r2) -> {
-			String s1 = Objects.requireNonNull(r1).getProperty(property).getObject().asLiteral().getString();
-			String s2 = Objects.requireNonNull(r2).getProperty(property).getObject().asLiteral().getString();
+			String s1 = r1.getProperty(property).getObject().asLiteral().getString();
+			String s2 = r2.getProperty(property).getObject().asLiteral().getString();
 			return Ordering.natural().nullsFirst().compare(s1, s2);
 		}).nullsFirst();
 	}

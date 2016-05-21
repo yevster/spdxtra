@@ -15,12 +15,10 @@ public class Creator {
 	private Supplier<String> toString;
 
 	private Creator(String name, Optional<String> email, Supplier<String> toString) {
-		if (!Validate.name(name)) {
-			throw new IllegalArgumentException("Inavlid name: " + name);
-		}
-		if (Objects.requireNonNull(email).isPresent() && !Validate.email(email.get())) {
-			throw new IllegalArgumentException("Illegal email: " + email);
-		}
+		Validate.notBlank(name);
+
+		if (Objects.requireNonNull(email).isPresent())
+			Validate.email(email.get());
 
 		this.toString = toString;
 	}
@@ -79,7 +77,8 @@ public class Creator {
 
 		Optional<String> email = Optional.empty();
 		if (name.contains("(")) {
-			String emailString = StringUtils.trim(StringUtils.substringBeforeLast(StringUtils.substringAfterLast(name, "("), ")"));
+			String emailString = StringUtils
+					.trim(StringUtils.substringBeforeLast(StringUtils.substringAfterLast(name, "("), ")"));
 			if (!StringUtils.isBlank(emailString)) {
 				email = Optional.of(emailString);
 			}
