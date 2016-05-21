@@ -1,7 +1,9 @@
 package com.yevster.spdxtra.model.write;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -44,19 +46,31 @@ public abstract class License {
 		private final String compoundElementName;
 		private final String operandLabel;
 
+		private AtomicReference<RDFNode> generatedNode = new AtomicReference<>();
+
+		private AtomicReference<WeakReference<Model>> lastModelReference = new AtomicReference<>(
+				new WeakReference<>(null));
+
 		public CompoundLicense(String compoundElementName, String operandLabel, License... memberLicenses) {
 			this.memberLicenses = memberLicenses;
 			this.compoundElementName = compoundElementName;
 			this.operandLabel = operandLabel;
 		}
 
-		public RDFNode getRdfNode(Model m) {
-			Resource licenseType = ResourceFactory.createResource(SpdxUris.SPDX_TERMS + compoundElementName);
-			Resource result = m.createResource(licenseType);
-			for (License memberLicense : memberLicenses) {
-				result.addProperty(SpdxProperties.LICENSE_MEMBER, memberLicense.getRdfNode(m));
-			}
-			return result;
+		public RDFNode getRdfNode(final Model m) {
+			return generatedNode.updateAndGet(node -> {
+				WeakReference<Model> lastModelWR = lastModelReference.getAndSet(new WeakReference<>(m));
+				Model lastModel = lastModelWR.get();
+				if (node == null || lastModel != m) {
+					Resource licenseType = ResourceFactory.createResource(SpdxUris.SPDX_TERMS + compoundElementName);
+					Resource result = m.createResource(licenseType);
+					for (License memberLicense : memberLicenses) {
+						result.addProperty(SpdxProperties.LICENSE_MEMBER, memberLicense.getRdfNode(m));
+					}
+					return result;
+				} else
+					return node;
+			});
 		}
 
 		@Override
