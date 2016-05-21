@@ -6,15 +6,24 @@
 
 Slack channel: [#spdxtra](https://spdxtra.slack.com/archives/spdxtra)
 
-##Project Description
+##What is SPDX?
 
 SPDX is a standard, championed by The Linux Foundation, for describing the contents and, most importantly, licensing information for software products.
 
+SPDX uses [Linked Data](https://en.wikipedia.org/wiki/Linked_data) to document the a software supply chain. An SPDX document typically describes one or more software "packages", which may or may not contain files or reference other packages through various types of relationships. Because all documents, files, and packages are represented with URIs, it is easy to use SPDX to describe relationships among packages and files from across the web.
+
+
+
+
+##Project Description
+
+
+
 SpdXtra is a Java API for building and analyzing SPDX for large codebases. Unlike SPDXtools, the document model is not built or kept in memory.
 
-At present, the API is sufficient to create minimal SPDX 2.1 documents, but is far from feature complete. For example(s) of what is currently possible with the API, a demo/tutorial is available [here](https://bitbucket.org/yevster/spdxtraxample).
+At present, the API is sufficient to create minimal SPDX 2.1 and 2.0 documents, but it is not yet feature-complete. Examples of some of SpdXtra's possibilities may be found [here](https://bitbucket.org/yevster/spdxtraxample).
 
-In addition, the command line tool can be used to convert SPDX from RDF form to JSON-LD - if that's your desire. Once the minimal document, package, and file properties mandated by the SPDX 2.0 specification are implemented, the first release will be made.
+In addition, the command line tool can be used to convert SPDX from RDF form to JSON-LD - if that's your desire.
 
 ##So how does it work?
 
