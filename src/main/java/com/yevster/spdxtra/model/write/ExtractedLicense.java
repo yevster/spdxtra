@@ -68,4 +68,9 @@ class ExtractedLicense extends License {
 		}
 		return resource;
 	}
+	
+	@Override
+	public String getPrettyName() {
+		return this.name;
+	}
 }

@@ -75,6 +75,11 @@ public enum LicenseList {
 			return ResourceFactory.createResource(SpdxUris.LISTED_LICENSE_NAMESPACE + id);
 		}
 
+		@Override
+		public String getPrettyName() {
+			return getLicenseId();
+		}
+
 		/**
 		 * Saves all the information available for the license, beyond what is
 		 * used in SPDX. Can be used to clone or perist the license list.

@@ -13,6 +13,8 @@ import com.yevster.spdxtra.Write.ModelUpdate;
 import com.yevster.spdxtra.model.write.License;
 import com.yevster.spdxtra.util.MiscUtils;
 
+import junit.framework.Assert;
+
 import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -56,6 +58,7 @@ public class CompoundLicenseTest {
 				LicenseList.INSTANCE.getListedLicenseById("Apache-2.0").get());
 		assertNotNull(conjunctiveLicense);
 
+		assertEquals("(GPL-2.0) AND (Apache-2.0)", conjunctiveLicense.getPrettyName());
 		Write.applyUpdatesInOneTransaction(dataset, Write.Package.concludedLicense(pkgUri, conjunctiveLicense));
 
 		Resource pkgResource = Read.lookupResourceByUri(dataset, pkgUri).get();
@@ -99,8 +102,10 @@ public class CompoundLicenseTest {
 		License disjunctiveLicense = License.or(
 				License.extracted("Ay caramba, dios mio! No estoy bien.", "oyoyoyo", documentNamespace, extractedLicenseId),
 				License.NOASSERTION);
+		
 		assertNotNull(disjunctiveLicense);
-
+		assertEquals("(oyoyoyo) OR (NOASSERTION)", disjunctiveLicense.getPrettyName());
+		
 		Write.applyUpdatesInOneTransaction(dataset, Write.Package.declaredLicense(pkgUri, disjunctiveLicense));
 
 		Resource pkgResource = Read.lookupResourceByUri(dataset, pkgUri).get();
