@@ -4,6 +4,8 @@
 [![Build Status](https://travis-ci.org/yevster/spdxtra.svg?branch=master)](https://travis-ci.org/yevster/spdxtra)
 [![Coverage Status](https://coveralls.io/repos/github/yevster/spdxtra/badge.svg?branch=master)](https://coveralls.io/github/yevster/spdxtra?branch=master)
 
+Slack channel: [#spdxtra](https://spdxtra.slack.com/archives/spdxtra)
+
 ##Project Description
 
 SPDX is a standard, championed by The Linux Foundation, for describing the contents and, most importantly, licensing information for software products.
