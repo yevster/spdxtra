@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>SpdXtra by yevster</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>SpdXtra</h1>
+        <h2>A new Java-based SPDX generation, analysis, and conversion framework.</h2>
+        <a href="https://github.com/yevster/spdxtra" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <p><img src="http://s1.postimg.org/y28xxq473/image_2.jpg" alt="SpdXtra"></p>
+
+<p><a href="https://bintray.com/yevster/maven/SpdXtra/_latestVersion"> <img src="https://api.bintray.com/packages/yevster/maven/SpdXtra/images/download.svg" alt="Download"> </a>
+<a href="https://travis-ci.org/yevster/spdxtra"><img src="https://travis-ci.org/yevster/spdxtra.svg?branch=master" alt="Build Status"></a>
+<a href="https://coveralls.io/github/yevster/spdxtra?branch=master"><img src="https://coveralls.io/repos/github/yevster/spdxtra/badge.svg?branch=master" alt="Coverage Status"></a></p>
+
+<p>Slack channel: <a href="https://spdxtra.slack.com/archives/spdxtra">#spdxtra</a></p>
+
+<h2>
+<a id="what-is-spdx" class="anchor" href="#what-is-spdx" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What is SPDX?</h2>
+
+<p>SPDX is a standard, championed by The Linux Foundation, for describing the contents and, most importantly, licensing information for software products.</p>
+
+<p>SPDX uses <a href="https://en.wikipedia.org/wiki/Linked_data">Linked Data</a> to document the a software supply chain. An SPDX document typically describes one or more software "packages", which may or may not contain files or reference other packages through various types of relationships. Because all documents, files, and packages are represented with URIs, it is easy to use SPDX to describe relationships among packages and files from across the web.</p>
+
+<h2>
+<a id="project-description" class="anchor" href="#project-description" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Project Description</h2>
+
+<p>SpdXtra is a Java API for building and analyzing SPDX for large codebases. Unlike SPDXtools, the document model is not built or kept in memory.</p>
+
+<p>At present, the API is sufficient to create minimal SPDX 2.1 and 2.0 documents, but it is not yet feature-complete. Examples of some of SpdXtra's possibilities may be found <a href="https://bitbucket.org/yevster/spdxtraxample">here</a>.</p>
+
+<p>In addition, the command line tool can be used to convert SPDX from RDF form to JSON-LD - if that's your desire.</p>
+
+<h2>
+<a id="so-how-does-it-work" class="anchor" href="#so-how-does-it-work" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>So how does it work?</h2>
+
+<p>SpdXtra is designed to perform tractibly when generating or analyzing SPDX for very large codebases (hundreds of thousands of files).</p>
+
+<p>At its core, SpdXtra is a library static (as in "completely stateless") SPDX-specific operations to populate and access a TDB dataset.. It has two top-level classes with static methods:</p>
+
+<p><code>Read</code> - Return immutable views over specific SPDX elements and to output the datastore to a file.</p>
+
+<p><code>Write</code> - To generate SPDX-specific inserts and updates to the dataset and apply them in a transactional way. Grouping updates into transactions can ensure atomicity of multiple updates to the same element and improved performance (multiple updates on the same resource can be persisted at once).</p>
+
+<h2>
+<a id="limitations-important" class="anchor" href="#limitations-important" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Limitations (important!)</h2>
+
+<p>The TDB datastore used by SpdXtra may not be used concurrently by multiple processes.</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>This product is licensed under the Apache 2.0 License.</p>
+
+<p>All documents produced by this product are licensed under the Creative Commons Zero v1.0 Universal license, per Section 2 of the SPDX Specification.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/yevster/spdxtra/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/yevster/spdxtra/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/yevster/spdxtra"></a> is maintained by <a href="https://github.com/yevster">yevster</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
