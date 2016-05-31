@@ -26,7 +26,6 @@ dependencies {
     compile 'org.apache.jena:jena-tdb:3.0.1'
     compile 'com.github.jsonld-java:jsonld-java-parent:0.8.2'
     compile 'com.google.guava:guava:19.0'
-    compile 'com.yevster.net.rootdev:java-rdfa:0.4.3'
     testCompile 'org.mockito:mockito-all:1.10.19'
     testCompile 'junit:junit:4.11'
 }
