@@ -1,12 +1,12 @@
 package com.yevster.spdxtra.model;
 
-import com.google.common.base.MoreObjects;
 import com.yevster.spdxtra.NoneNoAssertionOrValue;
 import com.yevster.spdxtra.SpdxProperties;
 import com.yevster.spdxtra.SpdxUris;
 import com.yevster.spdxtra.util.MiscUtils;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.ext.com.google.common.base.MoreObjects;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;

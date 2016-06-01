@@ -9,25 +9,30 @@ plugins {
 
 group 'com.yevster'
 
-version '0.5-SNAPSHOT'
+version '0.6-SNAPSHOT'
 mainClassName = 'com.yevster.spdxtra.cli.CommandLineTool'
-
+def jenaVersion='3.1.0'
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
-    maven {
-        url  'http://dl.bintray.com/yevster/maven'
-    }
 }
 
 dependencies {
-    compile 'org.apache.jena:jena-core:3.0.1'
-    compile 'org.apache.jena:jena-tdb:3.0.1'
-    compile 'com.github.jsonld-java:jsonld-java-parent:0.8.2'
-    compile 'com.google.guava:guava:19.0'
+
+    compile "org.apache.jena:jena-tdb:${jenaVersion}"
+    compile 'com.github.jsonld-java:jsonld-java-parent:0.8.3'
+    
     testCompile 'org.mockito:mockito-all:1.10.19'
+    testCompile 'com.google.guava:guava:19.0'
     testCompile 'junit:junit:4.11'
+    
+    runtime "org.apache.jena:jena-base:${jenaVersion}"
+    runtime "org.apache.jena:jena-core:${jenaVersion}"
+    runtime "org.apache.jena:jena-arq:${jenaVersion}"
+    runtime "org.apache.jena:jena-shaded-guava:${jenaVersion}"
+    runtime 'org.apache.thrift:libthrift:0.9.2'
+    runtime 'com.github.andrewoma.dexx:collection:0.6'
 }
 
 jar {

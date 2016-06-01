@@ -1,5 +1,31 @@
 package com.yevster.spdxtra;
 
+import com.github.jsonldjava.core.JsonLdError;
+import com.github.jsonldjava.core.JsonLdOptions;
+import com.github.jsonldjava.core.JsonLdProcessor;
+import com.github.jsonldjava.utils.JsonUtils;
+import com.yevster.spdxtra.model.Relationship;
+import com.yevster.spdxtra.model.SpdxDocument;
+import com.yevster.spdxtra.model.SpdxElement;
+import com.yevster.spdxtra.model.SpdxPackage;
+import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.WriterGraphRIOT;
+import org.apache.jena.riot.system.PrefixMapFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,36 +39,6 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ReadWrite;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.WriterGraphRIOT;
-import org.apache.jena.riot.system.PrefixMapFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.github.jsonldjava.core.JsonLdError;
-import com.github.jsonldjava.core.JsonLdOptions;
-import com.github.jsonldjava.core.JsonLdProcessor;
-import com.github.jsonldjava.utils.JsonUtils;
-import com.google.common.collect.Iterators;
-import com.yevster.spdxtra.model.Relationship;
-import com.yevster.spdxtra.model.SpdxDocument;
-import com.yevster.spdxtra.model.SpdxElement;
-import com.yevster.spdxtra.model.SpdxFile;
-import com.yevster.spdxtra.model.SpdxPackage;
 
 /**
  * @author yevster

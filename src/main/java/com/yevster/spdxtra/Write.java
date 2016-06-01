@@ -1,49 +1,31 @@
 package com.yevster.spdxtra;
 
+import com.yevster.spdxtra.model.*;
+import com.yevster.spdxtra.model.Creator.HumanCreator;
+import com.yevster.spdxtra.model.write.License;
+import com.yevster.spdxtra.util.MiscUtils;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.ext.com.google.common.base.Strings;
+import org.apache.jena.ext.com.google.common.collect.Ordering;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.impl.ResourceImpl;
+import org.apache.jena.tdb.TDBFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.ReadWrite;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.rdf.model.impl.ResourceImpl;
-import org.apache.jena.tdb.TDBFactory;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Ordering;
-import com.yevster.spdxtra.model.Annotation.Type;
-import com.yevster.spdxtra.model.Creator.HumanCreator;
-import com.yevster.spdxtra.model.Checksum;
-import com.yevster.spdxtra.model.Creator;
-import com.yevster.spdxtra.model.FileType;
-import com.yevster.spdxtra.model.Relationship;
-import com.yevster.spdxtra.model.SpdxDocument;
-import com.yevster.spdxtra.model.SpdxElement;
-import com.yevster.spdxtra.model.SpdxFile;
-import com.yevster.spdxtra.model.SpdxPackage;
-import com.yevster.spdxtra.model.write.License;
-import com.yevster.spdxtra.util.MiscUtils;
 
 public final class Write {
 
@@ -99,8 +81,8 @@ public final class Write {
 
 		}
 
-		public static ModelUpdate annotation(String baseUrl, String parentSpdxId, Type type, ZonedDateTime date,
-				Creator annotator, String comment) {
+		public static ModelUpdate annotation(String baseUrl, String parentSpdxId, Annotation.Type type, ZonedDateTime date,
+											 Creator annotator, String comment) {
 			// validation
 			Validate.baseUrl(baseUrl);
 			Validate.spdxElementId(parentSpdxId);
@@ -665,7 +647,7 @@ public final class Write {
 		 */
 		public static ModelUpdate fileTypes(String fileUri, final FileType... fileTypes) {
 			Validate.spdxElementUri(fileUri);
-			Validate.noNulls(fileTypes);
+			Validate.noNulls((Object[])fileTypes);
 			return (Model m) -> {
 				Resource file = m.getResource(fileUri);
 				file.removeAll(SpdxProperties.FILE_TYPE);
@@ -689,7 +671,7 @@ public final class Write {
 		public static ModelUpdate checksums(String fileUri, String sha1, Checksum... others) {
 			Validate.spdxElementUri(fileUri);
 			Validate.notNull(sha1);
-			Validate.noNulls(others);
+			Validate.noNulls((Object[])others);
 
 			return (Model m) -> {
 				Resource file = m.getResource(fileUri);
@@ -720,7 +702,7 @@ public final class Write {
 		 */
 		public static ModelUpdate contributors(String fileUri, String... contributors) {
 			Validate.spdxElementUri(fileUri);
-			Validate.noNulls(contributors);
+			Validate.noNulls((Object[])contributors);
 			return (m) -> {
 				Resource file = m.getResource(fileUri);
 				file.removeAll(SpdxProperties.FILE_CONTRIBUTOR);

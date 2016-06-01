@@ -1,14 +1,12 @@
 package com.yevster.spdxtra.model;
 
+import com.yevster.spdxtra.Validate;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.yevster.spdxtra.Validate;
 
 public class Creator {
 
