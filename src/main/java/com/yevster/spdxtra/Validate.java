@@ -56,7 +56,7 @@ public class Validate {
 			throw exceptionFactory.apply("Argument may not be null");
 	}
 
-	public static void noNulls(Object[] array) {
+	public static void noNulls(Object... array) {
 		for (Object o : array) {
 			Objects.requireNonNull(o);
 		}

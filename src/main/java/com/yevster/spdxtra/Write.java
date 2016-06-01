@@ -750,7 +750,6 @@ public final class Write {
 			}
 			transaction.commit();
 		}
-
 	}
 
 	/**
@@ -812,6 +811,9 @@ public final class Write {
 
 	public static RdfResourceUpdate addRelationship(String sourceUri, String targetUri, final Optional<String> comment,
 			final Relationship.Type type) {
+		Validate.spdxElementUri(sourceUri);
+		Validate.spdxElementUri(targetUri);
+		Validate.noNulls(comment, type);
 
 		return new RdfResourceUpdate(sourceUri, SpdxProperties.SPDX_RELATIONSHIP, true, (Model m) -> {
 
